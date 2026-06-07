@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Fenlora Catálogos</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --azul:#185FA5; --bg:#F4F6F9; --card:#FFFFFF; --tx:#222; --suave:#777;
+    --linea:#E4E8EE; --verde:#1F6B3A; --verdeBg:#E6F4EC;
+    --amar:#9A6B00; --amarBg:#FBF1DA; --rojo:#B3261E; --rojoBg:#FBEAE9;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased}
+
+  .top{background:var(--card);border-bottom:1px solid var(--linea);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:20}
+  .top .ico{width:36px;height:36px;border-radius:9px;background:var(--azul);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px}
+  .top .ti{font-size:15px;font-weight:600}
+  .top .ts{font-size:12px;color:var(--suave)}
+
+  .wrap{max-width:1000px;margin:0 auto;padding:18px}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+  @media(max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .stat{background:var(--card);border:1px solid var(--linea);border-radius:12px;padding:14px}
+  .stat .lbl{font-size:12px;color:var(--suave)}
+  .stat .num{font-size:24px;font-weight:600;margin-top:3px}
+
+  .panel{background:var(--card);border:1px solid var(--linea);border-radius:14px;overflow:hidden}
+  .ph{display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid var(--linea)}
+  .ph .t{font-size:15px;font-weight:600}
+  .btn{border:none;cursor:pointer;font-size:13px;font-weight:500;padding:8px 14px;border-radius:9px;background:var(--azul);color:#fff}
+  .btn.sec{background:#fff;color:var(--azul);border:1px solid var(--azul)}
+
+  .row{display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid var(--linea)}
+  .row:last-child{border-bottom:none}
+  .dot{width:30px;height:30px;border-radius:8px;flex:0 0 auto}
+  .rinfo{min-width:0}
+  .rinfo .n{font-size:14px;font-weight:600}
+  .rinfo .s{font-size:12px;color:var(--suave)}
+  .badge{margin-left:auto;font-size:11px;padding:5px 11px;border-radius:999px;white-space:nowrap}
+  .b-verde{background:var(--verdeBg);color:var(--verde)}
+  .b-amar{background:var(--amarBg);color:var(--amar)}
+  .b-rojo{background:var(--rojoBg);color:var(--rojo)}
+  .acts{display:flex;gap:10px;color:var(--suave);font-size:18px}
+  .acts span{cursor:pointer}
+
+  .estado{padding:50px 20px;text-align:center;color:var(--suave);font-size:14px}
+  .spin{width:32px;height:32px;border:3px solid var(--linea);border-top-color:var(--azul);border-radius:50%;animation:g .8s linear infinite;margin:0 auto 12px}
+  @keyframes g{to{transform:rotate(360deg)}}
+
+  /* Modal crear cliente */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:50;overflow-y:auto;padding:30px 16px}
+  .overlay.on{display:flex}
+  .modal{background:#fff;border-radius:16px;width:100%;max-width:460px;padding:22px}
+  .modal h3{font-size:17px;margin-bottom:14px}
+  .modal label{display:block;font-size:12px;color:var(--suave);margin:10px 0 4px}
+  .modal input,.modal select{width:100%;padding:10px;border:1px solid var(--linea);border-radius:8px;font-size:14px;font-family:inherit}
+  .modal .fila{display:flex;gap:10px}
+  .modal .fila>div{flex:1}
+  .modal .botones{display:flex;gap:10px;margin-top:18px}
+  .color-in{height:42px;padding:4px!important}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="ico">▦</div>
+  <div>
+    <div class="ti">Fenlora Catálogos</div>
+    <div class="ts">Panel de control</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="stats" id="stats">
+    <div class="stat"><div class="lbl">Clientes activos</div><div class="num">—</div></div>
+    <div class="stat"><div class="lbl">Por cobrar</div><div class="num">—</div></div>
+    <div class="stat"><div class="lbl">Suspendidos</div><div class="num">—</div></div>
+    <div class="stat"><div class="lbl">Ingreso mes</div><div class="num">—</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="ph">
+      <div class="t">Clientes y pagos</div>
+      <button class="btn" style="margin-left:auto" onclick="abrirModalNuevo()">+ Nuevo cliente</button>
+    </div>
+    <div id="lista">
+      <div class="estado"><div class="spin"></div>Cargando clientes…</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal crear cliente -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3>Nuevo cliente</h3>
+    <label>Nombre del negocio</label>
+    <input id="f-nombre" placeholder="Ej: Ferretería El Tornillo">
+    <div class="fila">
+      <div>
+        <label>Subdominio (sin espacios)</label>
+        <input id="f-sub" placeholder="tornillo">
+      </div>
+      <div>
+        <label>Nicho</label>
+        <select id="f-nicho">
+          <option value="distribuidora">Distribuidora</option>
+          <option value="ferreteria">Ferretería</option>
+          <option value="ropa">Ropa / Calzado</option>
+          <option value="restaurante">Restaurante</option>
+          <option value="salon">Salón / Belleza</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+    </div>
+    <div class="fila">
+      <div>
+        <label>Color primario</label>
+        <input id="f-color1" type="color" value="#185FA5" class="color-in">
+      </div>
+      <div>
+        <label>Color secundario</label>
+        <input id="f-color2" type="color" value="#B8860B" class="color-in">
+      </div>
+    </div>
+    <label>WhatsApp (57 + número)</label>
+    <input id="f-wa" placeholder="573001234567">
+    <div class="fila">
+      <div>
+        <label>Tipo</label>
+        <select id="f-tipo">
+          <option value="producto">Productos</option>
+          <option value="servicio">Servicios</option>
+        </select>
+      </div>
+      <div>
+        <label>Texto del botón</label>
+        <input id="f-boton" placeholder="Cotizar por WhatsApp">
+      </div>
+    </div>
+    <div class="fila">
+      <div>
+        <label>Muestra precio</label>
+        <select id="f-precio">
+          <option value="true">Sí</option>
+          <option value="false">No</option>
+        </select>
+      </div>
+      <div>
+        <label>Valor mensual (COP)</label>
+        <input id="f-plan" type="number" placeholder="50000">
+      </div>
+    </div>
+    <div class="botones">
+      <button class="btn sec" style="flex:1" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn" style="flex:1" id="btn-guardar" onclick="guardarCliente()">Crear cliente</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://pzxjvtbkrlpdtfyimhmi.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6eGp2dGJrcmxwZHRmeWltaG1pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4Mzk1NzIsImV4cCI6MjA5NjQxNTU3Mn0.3rgBhcPPdXiPv9FOQWzoOK-d6NsIwUdttgm1HTYy1DA';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let EMPRESAS = [];
+
+async function cargar(){
+  const { data, error } = await sb.from('empresas').select('*').order('creado_en');
+  if (error){
+    document.getElementById('lista').innerHTML = '<div class="estado">Error al cargar: '+error.message+'</div>';
+    return;
+  }
+  EMPRESAS = data || [];
+  pintarStats();
+  pintarLista();
+}
+
+function diasPara(fecha){
+  if (!fecha) return null;
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const v = new Date(fecha+'T00:00:00');
+  return Math.round((v - hoy) / 86400000);
+}
+
+function estadoVisual(emp){
+  // Si está suspendido (no activo o estado suspendido)
+  if (emp.estado_pago === 'suspendido' || emp.activo === false){
+    return {clase:'b-rojo', txt:'Suspendido · no pagó'};
+  }
+  const d = diasPara(emp.fecha_vence);
+  if (d !== null && d < 0) return {clase:'b-rojo', txt:'Vencido hace '+Math.abs(d)+' días'};
+  if (d !== null && d <= 5) return {clase:'b-amar', txt:'Vence en '+d+' días'};
+  return {clase:'b-verde', txt:'Al día'};
+}
+
+function pintarStats(){
+  const activos = EMPRESAS.filter(e=>e.activo !== false && e.estado_pago !== 'suspendido').length;
+  const porCobrar = EMPRESAS.filter(e=>{
+    const d = diasPara(e.fecha_vence);
+    return e.activo !== false && e.estado_pago !== 'suspendido' && d !== null && d <= 5;
+  }).length;
+  const suspendidos = EMPRESAS.filter(e=>e.estado_pago === 'suspendido' || e.activo === false).length;
+  const ingreso = EMPRESAS
+    .filter(e=>e.activo !== false && e.estado_pago !== 'suspendido')
+    .reduce((s,e)=>s + (Number(e.plan_valor)||0), 0);
+  const fmt = (n)=> '$'+Number(n).toLocaleString('es-CO');
+  const s = document.getElementById('stats');
+  s.children[0].querySelector('.num').textContent = activos;
+  s.children[1].querySelector('.num').textContent = porCobrar;
+  s.children[2].querySelector('.num').textContent = suspendidos;
+  s.children[3].querySelector('.num').textContent = fmt(ingreso);
+}
+
+function pintarLista(){
+  const cont = document.getElementById('lista');
+  if (!EMPRESAS.length){
+    cont.innerHTML = '<div class="estado">Aún no tienes clientes. Crea el primero con “+ Nuevo cliente”.</div>';
+    return;
+  }
+  let html = '';
+  EMPRESAS.forEach(e=>{
+    const ev = estadoVisual(e);
+    const color = e.color_primario || '#888';
+    const suspendido = (e.estado_pago === 'suspendido' || e.activo === false);
+    const togglePago = suspendido
+      ? '<span title="Reactivar" onclick="reactivar(\''+e.id+'\')">▶</span>'
+      : '<span title="Suspender" onclick="suspender(\''+e.id+'\')">⏸</span>';
+    html += '<div class="row">'
+      + '<div class="dot" style="background:'+color+'"></div>'
+      + '<div class="rinfo"><div class="n">'+e.nombre+'</div>'
+      + '<div class="s">'+e.subdominio+' · '+(e.tipo_nicho||'')+'</div></div>'
+      + '<span class="badge '+ev.clase+'">'+ev.txt+'</span>'
+      + '<div class="acts">'
+      + '<span title="Ver catálogo" onclick="verCatalogo(\''+e.subdominio+'\')">👁</span>'
+      + '<span title="Editar" onclick="editarCliente(\''+e.id+'\')">✏️</span>'
+      + togglePago
+      + '<span title="Recordar pago" onclick="recordarPago(\''+e.id+'\')">🔔</span>'
+      + '<span title="Borrar" onclick="borrarCliente(\''+e.id+'\')">🗑️</span>'
+      + '</div></div>';
+  });
+  cont.innerHTML = html;
+}
+
+// ── Acciones de pago ──
+async function suspender(id){
+  if (!confirm('¿Suspender este cliente? Su catálogo dejará de mostrarse.')) return;
+  await sb.from('empresas').update({estado_pago:'suspendido', activo:false}).eq('id', id);
+  cargar();
+}
+async function reactivar(id){
+  const nueva = prompt('Reactivar cliente. ¿En cuántos días vence el próximo pago?', '30');
+  if (nueva === null) return;
+  const dias = parseInt(nueva)||30;
+  const fecha = new Date(); fecha.setDate(fecha.getDate()+dias);
+  const iso = fecha.toISOString().slice(0,10);
+  await sb.from('empresas').update({estado_pago:'al_dia', activo:true, fecha_vence:iso}).eq('id', id);
+  cargar();
+}
+function recordarPago(id){
+  const e = EMPRESAS.find(x=>x.id===id);
+  if (!e || !e.whatsapp){ alert('Este cliente no tiene WhatsApp registrado.'); return; }
+  const wa = e.whatsapp.replace(/\D/g,'');
+  const msg = encodeURIComponent('Hola '+e.nombre+', te recordamos el pago de tu catálogo digital. ¡Gracias!');
+  window.open('https://wa.me/'+wa+'?text='+msg, '_blank');
+}
+function verCatalogo(sub){
+  // URL base del catálogo. Cambia esto si tu dirección cambia (ej. al usar subdominios).
+  const BASE_CATALOGO = 'catalogo-saas-base.html';
+  window.open(BASE_CATALOGO + '?empresa=' + encodeURIComponent(sub), '_blank');
+}
+
+// ── Crear / editar cliente ──
+function cerrarModal(){ document.getElementById('overlay').classList.remove('on'); }
+
+let EDITANDO = null; // null = creando; si tiene id = editando ese cliente
+
+function abrirModalNuevo(){
+  EDITANDO = null;
+  document.querySelector('.modal h3').textContent = 'Nuevo cliente';
+  document.getElementById('btn-guardar').textContent = 'Crear cliente';
+  // Limpiar campos
+  document.getElementById('f-nombre').value = '';
+  document.getElementById('f-sub').value = '';
+  document.getElementById('f-sub').disabled = false;
+  document.getElementById('f-nicho').value = 'distribuidora';
+  document.getElementById('f-color1').value = '#185FA5';
+  document.getElementById('f-color2').value = '#B8860B';
+  document.getElementById('f-wa').value = '';
+  document.getElementById('f-tipo').value = 'producto';
+  document.getElementById('f-boton').value = '';
+  document.getElementById('f-precio').value = 'true';
+  document.getElementById('f-plan').value = '';
+  document.getElementById('overlay').classList.add('on');
+}
+
+function editarCliente(id){
+  const e = EMPRESAS.find(x=>x.id===id);
+  if (!e) return;
+  EDITANDO = id;
+  document.querySelector('.modal h3').textContent = 'Editar cliente';
+  document.getElementById('btn-guardar').textContent = 'Guardar cambios';
+  document.getElementById('f-nombre').value = e.nombre || '';
+  document.getElementById('f-sub').value = e.subdominio || '';
+  document.getElementById('f-sub').disabled = true; // el subdominio no se cambia (es la URL)
+  document.getElementById('f-nicho').value = e.tipo_nicho || 'distribuidora';
+  document.getElementById('f-color1').value = e.color_primario || '#185FA5';
+  document.getElementById('f-color2').value = e.color_secundario || '#B8860B';
+  document.getElementById('f-wa').value = e.whatsapp || '';
+  document.getElementById('f-tipo').value = e.tipo_negocio || 'producto';
+  document.getElementById('f-boton').value = e.texto_boton || '';
+  document.getElementById('f-precio').value = e.muestra_precio ? 'true' : 'false';
+  document.getElementById('f-plan').value = e.plan_valor || '';
+  document.getElementById('overlay').classList.add('on');
+}
+
+async function borrarCliente(id){
+  const e = EMPRESAS.find(x=>x.id===id);
+  if (!e) return;
+  if (!confirm('¿Borrar a "'+e.nombre+'"? Se eliminarán también TODOS sus productos, categorías y marcas. Esta acción no se puede deshacer.')) return;
+  const confirmar = prompt('Para confirmar, escribe el nombre del cliente:\n'+e.nombre);
+  if (confirmar !== e.nombre){ alert('El nombre no coincide. No se borró nada.'); return; }
+  const { error } = await sb.from('empresas').delete().eq('id', id);
+  if (error){ alert('Error al borrar: '+error.message); return; }
+  cargar();
+}
+
+async function guardarCliente(){
+  const nombre = document.getElementById('f-nombre').value.trim();
+  const sub = document.getElementById('f-sub').value.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+  if (!nombre || !sub){ alert('Nombre y subdominio son obligatorios.'); return; }
+
+  const btn = document.getElementById('btn-guardar');
+  const textoOriginal = btn.textContent;
+  btn.textContent = 'Guardando…'; btn.disabled = true;
+
+  const plan = parseInt(document.getElementById('f-plan').value)||0;
+  const datos = {
+    nombre: nombre,
+    tipo_nicho: document.getElementById('f-nicho').value,
+    color_primario: document.getElementById('f-color1').value,
+    color_secundario: document.getElementById('f-color2').value,
+    whatsapp: document.getElementById('f-wa').value.trim(),
+    tipo_negocio: document.getElementById('f-tipo').value,
+    texto_boton: document.getElementById('f-boton').value.trim() || 'Cotizar por WhatsApp',
+    muestra_precio: document.getElementById('f-precio').value === 'true',
+    plan_valor: plan
+  };
+
+  if (EDITANDO){
+    // ── EDITAR cliente existente ──
+    const { error } = await sb.from('empresas').update(datos).eq('id', EDITANDO);
+    btn.textContent = textoOriginal; btn.disabled = false;
+    if (error){ alert('Error al guardar: '+error.message); return; }
+    cerrarModal(); cargar();
+  } else {
+    // ── CREAR cliente nuevo ──
+    const { data: existe } = await sb.from('empresas').select('id').eq('subdominio', sub);
+    if (existe && existe.length){
+      alert('Ya existe un cliente con el subdominio "'+sub+'". Elige otro.');
+      btn.textContent = textoOriginal; btn.disabled = false;
+      return;
+    }
+    const fecha = new Date(); fecha.setDate(fecha.getDate()+30);
+    datos.subdominio = sub;
+    datos.estado_pago = 'al_dia';
+    datos.activo = true;
+    datos.fecha_vence = fecha.toISOString().slice(0,10);
+    const { error } = await sb.from('empresas').insert(datos);
+    btn.textContent = textoOriginal; btn.disabled = false;
+    if (error){ alert('Error al crear: '+error.message); return; }
+    cerrarModal(); cargar();
+  }
+}
+
+cargar();
+</script>
+</body>
+</html>
