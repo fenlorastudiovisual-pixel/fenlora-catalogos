@@ -61,6 +61,20 @@
   .modal .fila>div{flex:1}
   .modal .botones{display:flex;gap:10px;margin-top:18px}
   .color-in{height:42px;padding:4px!important}
+
+  /* Vista catálogo del cliente */
+  .cab-cliente{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--linea);border-radius:14px;padding:14px 18px;margin-bottom:14px}
+  .cli-nombre{font-size:16px;font-weight:600}
+  .cli-sub{font-size:12px;color:var(--suave)}
+  .dos-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:640px){.dos-col{grid-template-columns:1fr}}
+  .item{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--linea)}
+  .item:last-child{border-bottom:none}
+  .item .nom{font-size:14px}
+  .item .acts{margin-left:auto;display:flex;gap:10px;color:var(--suave);font-size:16px}
+  .item .acts span{cursor:pointer}
+  .miniimg{width:42px;height:42px;border-radius:8px;background:#eee;object-fit:cover;flex:0 0 auto}
+  .miniimg.ph{display:flex;align-items:center;justify-content:center;color:#bbb;font-size:18px}
 </style>
 </head>
 <body>
@@ -75,20 +89,63 @@
 
 <div class="wrap">
 
-  <div class="stats" id="stats">
-    <div class="stat"><div class="lbl">Clientes activos</div><div class="num">—</div></div>
-    <div class="stat"><div class="lbl">Por cobrar</div><div class="num">—</div></div>
-    <div class="stat"><div class="lbl">Suspendidos</div><div class="num">—</div></div>
-    <div class="stat"><div class="lbl">Ingreso mes</div><div class="num">—</div></div>
+  <!-- ════════ VISTA 1: LISTA DE CLIENTES ════════ -->
+  <div id="vista-clientes">
+    <div class="stats" id="stats">
+      <div class="stat"><div class="lbl">Clientes activos</div><div class="num">—</div></div>
+      <div class="stat"><div class="lbl">Por cobrar</div><div class="num">—</div></div>
+      <div class="stat"><div class="lbl">Suspendidos</div><div class="num">—</div></div>
+      <div class="stat"><div class="lbl">Ingreso mes</div><div class="num">—</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="ph">
+        <div class="t">Clientes y pagos</div>
+        <button class="btn" style="margin-left:auto" onclick="abrirModalNuevo()">+ Nuevo cliente</button>
+      </div>
+      <div id="lista">
+        <div class="estado"><div class="spin"></div>Cargando clientes…</div>
+      </div>
+    </div>
   </div>
 
-  <div class="panel">
-    <div class="ph">
-      <div class="t">Clientes y pagos</div>
-      <button class="btn" style="margin-left:auto" onclick="abrirModalNuevo()">+ Nuevo cliente</button>
+  <!-- ════════ VISTA 2: CATÁLOGO DE UN CLIENTE ════════ -->
+  <div id="vista-catalogo" style="display:none">
+    <div class="cab-cliente">
+      <button class="btn sec" onclick="volverAClientes()">← Volver</button>
+      <div class="dot" id="cli-dot" style="width:34px;height:34px;border-radius:9px"></div>
+      <div>
+        <div class="cli-nombre" id="cli-nombre">—</div>
+        <div class="cli-sub" id="cli-sub">—</div>
+      </div>
+      <button class="btn" style="margin-left:auto" onclick="window.open('catalogo-saas-base.html?empresa='+CLIENTE_ACTUAL.subdominio,'_blank')">Ver catálogo ↗</button>
     </div>
-    <div id="lista">
-      <div class="estado"><div class="spin"></div>Cargando clientes…</div>
+
+    <!-- Categorías y marcas lado a lado -->
+    <div class="dos-col">
+      <div class="panel">
+        <div class="ph">
+          <div class="t">Categorías</div>
+          <button class="btn" style="margin-left:auto" onclick="crearCategoria()">+ Categoría</button>
+        </div>
+        <div id="lista-cats"><div class="estado">—</div></div>
+      </div>
+      <div class="panel">
+        <div class="ph">
+          <div class="t">Marcas</div>
+          <button class="btn" style="margin-left:auto" onclick="crearMarca()">+ Marca</button>
+        </div>
+        <div id="lista-marcas"><div class="estado">—</div></div>
+      </div>
+    </div>
+
+    <!-- Productos -->
+    <div class="panel" style="margin-top:14px">
+      <div class="ph">
+        <div class="t">Productos</div>
+        <button class="btn" style="margin-left:auto" onclick="abrirModalProducto()">+ Producto</button>
+      </div>
+      <div id="lista-productos"><div class="estado">—</div></div>
     </div>
   </div>
 
@@ -158,6 +215,43 @@
     <div class="botones">
       <button class="btn sec" style="flex:1" onclick="cerrarModal()">Cancelar</button>
       <button class="btn" style="flex:1" id="btn-guardar" onclick="guardarCliente()">Crear cliente</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal crear/editar producto -->
+<div class="overlay" id="overlay-prod">
+  <div class="modal">
+    <h3 id="prod-titulo">Nuevo producto</h3>
+    <label>Nombre del producto</label>
+    <input id="p-nombre" placeholder="Ej: Esmalte Rojo Pasión">
+    <label>Descripción</label>
+    <input id="p-desc" placeholder="Breve descripción">
+    <div class="fila">
+      <div>
+        <label>Precio (COP) — opcional</label>
+        <input id="p-precio" type="number" placeholder="0">
+      </div>
+      <div>
+        <label>Orden</label>
+        <input id="p-orden" type="number" placeholder="1" value="0">
+      </div>
+    </div>
+    <div class="fila">
+      <div>
+        <label>Categoría</label>
+        <select id="p-cat"></select>
+      </div>
+      <div>
+        <label>Marca</label>
+        <select id="p-marca"></select>
+      </div>
+    </div>
+    <label>Imagen (pega la URL de la foto)</label>
+    <input id="p-img" placeholder="https://...">
+    <div class="botones">
+      <button class="btn sec" style="flex:1" onclick="cerrarModalProducto()">Cancelar</button>
+      <button class="btn" style="flex:1" id="btn-guardar-prod" onclick="guardarProducto()">Crear producto</button>
     </div>
   </div>
 </div>
@@ -232,10 +326,11 @@ function pintarLista(){
       : '<span title="Suspender" onclick="suspender(\''+e.id+'\')">⏸</span>';
     html += '<div class="row">'
       + '<div class="dot" style="background:'+color+'"></div>'
-      + '<div class="rinfo"><div class="n">'+e.nombre+'</div>'
+      + '<div class="rinfo" style="cursor:pointer" onclick="abrirCatalogo(\''+e.id+'\')"><div class="n">'+e.nombre+'</div>'
       + '<div class="s">'+e.subdominio+' · '+(e.tipo_nicho||'')+'</div></div>'
       + '<span class="badge '+ev.clase+'">'+ev.txt+'</span>'
       + '<div class="acts">'
+      + '<span title="Gestionar catálogo" onclick="abrirCatalogo(\''+e.id+'\')">📦</span>'
       + '<span title="Ver catálogo" onclick="verCatalogo(\''+e.subdominio+'\')">👁</span>'
       + '<span title="Editar" onclick="editarCliente(\''+e.id+'\')">✏️</span>'
       + togglePago
@@ -375,6 +470,204 @@ async function guardarCliente(){
     if (error){ alert('Error al crear: '+error.message); return; }
     cerrarModal(); cargar();
   }
+}
+
+// ══════════════════════════════════════════════════════════
+// VISTA CATÁLOGO DEL CLIENTE (categorías, marcas, productos)
+// ══════════════════════════════════════════════════════════
+let CLIENTE_ACTUAL = null;
+let CATS = [];
+let MARCAS = [];
+let PRODS = [];
+let EDITANDO_PROD = null;
+
+async function abrirCatalogo(id){
+  const e = EMPRESAS.find(x=>x.id===id);
+  if (!e) return;
+  CLIENTE_ACTUAL = e;
+  document.getElementById('vista-clientes').style.display = 'none';
+  document.getElementById('vista-catalogo').style.display = 'block';
+  document.getElementById('cli-dot').style.background = e.color_primario || '#888';
+  document.getElementById('cli-nombre').textContent = e.nombre;
+  document.getElementById('cli-sub').textContent = e.subdominio + ' · ' + (e.tipo_nicho||'');
+  await cargarCatalogo();
+}
+
+function volverAClientes(){
+  document.getElementById('vista-catalogo').style.display = 'none';
+  document.getElementById('vista-clientes').style.display = 'block';
+  CLIENTE_ACTUAL = null;
+  cargar();
+}
+
+async function cargarCatalogo(){
+  const eid = CLIENTE_ACTUAL.id;
+  const [rc, rm, rp] = await Promise.all([
+    sb.from('categorias').select('*').eq('empresa_id', eid).order('orden'),
+    sb.from('marcas').select('*').eq('empresa_id', eid).order('orden'),
+    sb.from('productos').select('*').eq('empresa_id', eid).order('orden')
+  ]);
+  CATS = rc.data || [];
+  MARCAS = rm.data || [];
+  PRODS = rp.data || [];
+  pintarCats();
+  pintarMarcas();
+  pintarProductos();
+}
+
+// ── CATEGORÍAS ──
+function pintarCats(){
+  const c = document.getElementById('lista-cats');
+  if (!CATS.length){ c.innerHTML = '<div class="estado">Sin categorías aún.</div>'; return; }
+  c.innerHTML = CATS.map(x =>
+    '<div class="item"><div class="nom">'+x.nombre+'</div>'
+    + '<div class="acts"><span title="Borrar" onclick="borrarCategoria(\''+x.id+'\')">🗑️</span></div></div>'
+  ).join('');
+}
+async function crearCategoria(){
+  const nombre = prompt('Nombre de la nueva categoría:');
+  if (!nombre || !nombre.trim()) return;
+  const limpio = nombre.trim();
+  if (CATS.some(c => c.nombre.toLowerCase() === limpio.toLowerCase())){
+    alert('Ya existe una categoría con ese nombre.'); return;
+  }
+  const { error } = await sb.from('categorias').insert({
+    empresa_id: CLIENTE_ACTUAL.id, nombre: limpio, orden: CATS.length
+  });
+  if (error){ alert('Error: '+error.message); return; }
+  cargarCatalogo();
+}
+async function borrarCategoria(id){
+  if (!confirm('¿Borrar esta categoría? Los productos que la usen quedarán sin categoría.')) return;
+  const { error } = await sb.from('categorias').delete().eq('id', id);
+  if (error){ alert('Error: '+error.message); return; }
+  cargarCatalogo();
+}
+
+// ── MARCAS ──
+function pintarMarcas(){
+  const c = document.getElementById('lista-marcas');
+  if (!MARCAS.length){ c.innerHTML = '<div class="estado">Sin marcas aún.</div>'; return; }
+  c.innerHTML = MARCAS.map(x =>
+    '<div class="item"><div class="nom">'+x.nombre+'</div>'
+    + '<div class="acts"><span title="Borrar" onclick="borrarMarca(\''+x.id+'\')">🗑️</span></div></div>'
+  ).join('');
+}
+async function crearMarca(){
+  const nombre = prompt('Nombre de la nueva marca:');
+  if (!nombre || !nombre.trim()) return;
+  const limpio = nombre.trim();
+  if (MARCAS.some(m => m.nombre.toLowerCase() === limpio.toLowerCase())){
+    alert('Ya existe una marca con ese nombre.'); return;
+  }
+  const { error } = await sb.from('marcas').insert({
+    empresa_id: CLIENTE_ACTUAL.id, nombre: limpio, orden: MARCAS.length
+  });
+  if (error){ alert('Error: '+error.message); return; }
+  cargarCatalogo();
+}
+async function borrarMarca(id){
+  if (!confirm('¿Borrar esta marca? Los productos que la usen quedarán sin marca.')) return;
+  const { error } = await sb.from('marcas').delete().eq('id', id);
+  if (error){ alert('Error: '+error.message); return; }
+  cargarCatalogo();
+}
+
+// ── PRODUCTOS ──
+function pintarProductos(){
+  const c = document.getElementById('lista-productos');
+  if (!PRODS.length){ c.innerHTML = '<div class="estado">Sin productos aún. Crea el primero con “+ Producto”.</div>'; return; }
+  c.innerHTML = PRODS.map(p=>{
+    const cat = CATS.find(x=>x.id===p.categoria_id);
+    const mar = MARCAS.find(x=>x.id===p.marca_id);
+    const detalle = [cat&&cat.nombre, mar&&mar.nombre].filter(Boolean).join(' · ');
+    const precio = (p.precio!=null && p.precio!=='') ? ' · $'+Number(p.precio).toLocaleString('es-CO') : '';
+    const img = p.imagen_principal
+      ? '<img class="miniimg" src="'+p.imagen_principal+'">'
+      : '<div class="miniimg ph">◆</div>';
+    return '<div class="item">'+img
+      + '<div><div class="nom">'+p.nombre+'</div>'
+      + '<div class="cli-sub">'+(detalle||'sin clasificar')+precio+'</div></div>'
+      + '<div class="acts">'
+      + '<span title="Editar" onclick="editarProducto(\''+p.id+'\')">✏️</span>'
+      + '<span title="Borrar" onclick="borrarProducto(\''+p.id+'\')">🗑️</span>'
+      + '</div></div>';
+  }).join('');
+}
+
+function llenarSelectsProducto(){
+  const selCat = document.getElementById('p-cat');
+  const selMarca = document.getElementById('p-marca');
+  selCat.innerHTML = '<option value="">— Sin categoría —</option>' +
+    CATS.map(c=>'<option value="'+c.id+'">'+c.nombre+'</option>').join('');
+  selMarca.innerHTML = '<option value="">— Sin marca —</option>' +
+    MARCAS.map(m=>'<option value="'+m.id+'">'+m.nombre+'</option>').join('');
+}
+
+function abrirModalProducto(){
+  EDITANDO_PROD = null;
+  document.getElementById('prod-titulo').textContent = 'Nuevo producto';
+  document.getElementById('btn-guardar-prod').textContent = 'Crear producto';
+  llenarSelectsProducto();
+  ['p-nombre','p-desc','p-precio','p-img'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('p-orden').value = PRODS.length;
+  document.getElementById('p-cat').value = '';
+  document.getElementById('p-marca').value = '';
+  document.getElementById('overlay-prod').classList.add('on');
+}
+function editarProducto(id){
+  const p = PRODS.find(x=>x.id===id);
+  if (!p) return;
+  EDITANDO_PROD = id;
+  document.getElementById('prod-titulo').textContent = 'Editar producto';
+  document.getElementById('btn-guardar-prod').textContent = 'Guardar cambios';
+  llenarSelectsProducto();
+  document.getElementById('p-nombre').value = p.nombre || '';
+  document.getElementById('p-desc').value = p.descripcion || '';
+  document.getElementById('p-precio').value = (p.precio!=null?p.precio:'');
+  document.getElementById('p-orden').value = p.orden || 0;
+  document.getElementById('p-cat').value = p.categoria_id || '';
+  document.getElementById('p-marca').value = p.marca_id || '';
+  document.getElementById('p-img').value = p.imagen_principal || '';
+  document.getElementById('overlay-prod').classList.add('on');
+}
+function cerrarModalProducto(){ document.getElementById('overlay-prod').classList.remove('on'); }
+
+async function guardarProducto(){
+  const nombre = document.getElementById('p-nombre').value.trim();
+  if (!nombre){ alert('El nombre es obligatorio.'); return; }
+  const btn = document.getElementById('btn-guardar-prod');
+  const txt = btn.textContent; btn.textContent='Guardando…'; btn.disabled=true;
+
+  const precioVal = document.getElementById('p-precio').value;
+  const datos = {
+    nombre: nombre,
+    descripcion: document.getElementById('p-desc').value.trim(),
+    precio: precioVal==='' ? null : Number(precioVal),
+    orden: Number(document.getElementById('p-orden').value)||0,
+    categoria_id: document.getElementById('p-cat').value || null,
+    marca_id: document.getElementById('p-marca').value || null,
+    imagen_principal: document.getElementById('p-img').value.trim() || null
+  };
+
+  let error;
+  if (EDITANDO_PROD){
+    ({ error } = await sb.from('productos').update(datos).eq('id', EDITANDO_PROD));
+  } else {
+    datos.empresa_id = CLIENTE_ACTUAL.id;
+    ({ error } = await sb.from('productos').insert(datos));
+  }
+  btn.textContent = txt; btn.disabled = false;
+  if (error){ alert('Error: '+error.message); return; }
+  cerrarModalProducto();
+  cargarCatalogo();
+}
+async function borrarProducto(id){
+  const p = PRODS.find(x=>x.id===id);
+  if (!confirm('¿Borrar el producto "'+(p?p.nombre:'')+'"?')) return;
+  const { error } = await sb.from('productos').delete().eq('id', id);
+  if (error){ alert('Error: '+error.message); return; }
+  cargarCatalogo();
 }
 
 cargar();
