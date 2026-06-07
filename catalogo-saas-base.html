@@ -67,6 +67,11 @@
 
 <div class="cats" id="cats"></div>
 
+<div id="barra-busqueda" style="display:none;padding:10px 16px;max-width:1180px;margin:0 auto">
+  <input id="busqueda" oninput="pintarProductos()" placeholder="Buscar producto…"
+    style="width:100%;padding:11px 14px;border:1px solid var(--linea);border-radius:10px;font-size:14px;font-family:inherit;outline:none">
+</div>
+
 <div id="contenido">
   <div class="estado"><div class="spin"></div>Cargando catálogo…</div>
 </div>
@@ -157,11 +162,17 @@ function aplicarIdentidad(emp){
     emp.tipo_negocio === 'servicio' ? 'Servicios' : 'Catálogo';
   document.title = emp.nombre;
 
-  if (emp.logo_url){
+  // Logo: solo si tiene URL Y el interruptor mostrar_logo está activo
+  if (emp.logo_url && emp.mostrar_logo !== false){
     const cab = document.getElementById('cab');
     const img = document.createElement('img');
     img.className = 'logo'; img.src = emp.logo_url; img.alt = emp.nombre;
     cab.insertBefore(img, cab.firstChild);
+  }
+
+  // Barra de búsqueda: solo si el interruptor está activo
+  if (emp.mostrar_busqueda !== false){
+    document.getElementById('barra-busqueda').style.display = 'block';
   }
 }
 
@@ -192,8 +203,19 @@ function pintarProductos(){
   if (categoriaActiva !== 'todas'){
     lista = PRODUCTOS.filter(p=>p.categoria_id === categoriaActiva);
   }
+  // Filtro por texto de búsqueda
+  const inputBusq = document.getElementById('busqueda');
+  const termino = inputBusq ? inputBusq.value.trim().toLowerCase() : '';
+  if (termino){
+    lista = lista.filter(p=>
+      (p.nombre||'').toLowerCase().includes(termino) ||
+      (p.descripcion||'').toLowerCase().includes(termino)
+    );
+  }
   if (!lista.length){
-    cont.innerHTML = '<div class="estado">No hay productos en esta categoría todavía.</div>';
+    cont.innerHTML = '<div class="estado">'
+      + (termino ? 'No se encontró "'+termino+'".' : 'No hay productos en esta categoría todavía.')
+      + '</div>';
     return;
   }
 

@@ -243,6 +243,24 @@
         <input id="f-plan" type="number" placeholder="50000">
       </div>
     </div>
+    <div class="fila">
+      <div>
+        <label>Barra de búsqueda</label>
+        <select id="f-busqueda">
+          <option value="true">Sí</option>
+          <option value="false">No</option>
+        </select>
+      </div>
+      <div>
+        <label>Mostrar logo</label>
+        <select id="f-logo">
+          <option value="true">Sí</option>
+          <option value="false">No</option>
+        </select>
+      </div>
+    </div>
+    <label>URL del logo (opcional)</label>
+    <input id="f-logourl" placeholder="https://...">
     <div class="botones">
       <button class="btn sec" style="flex:1" onclick="cerrarModal()">Cancelar</button>
       <button class="btn" style="flex:1" id="btn-guardar" onclick="guardarCliente()">Crear cliente</button>
@@ -421,6 +439,9 @@ function abrirModalNuevo(){
   document.getElementById('f-boton').value = '';
   document.getElementById('f-precio').value = 'true';
   document.getElementById('f-plan').value = '';
+  document.getElementById('f-busqueda').value = 'true';
+  document.getElementById('f-logo').value = 'true';
+  document.getElementById('f-logourl').value = '';
   document.getElementById('overlay').classList.add('on');
 }
 
@@ -441,6 +462,9 @@ function editarCliente(id){
   document.getElementById('f-boton').value = e.texto_boton || '';
   document.getElementById('f-precio').value = e.muestra_precio ? 'true' : 'false';
   document.getElementById('f-plan').value = e.plan_valor || '';
+  document.getElementById('f-busqueda').value = (e.mostrar_busqueda !== false) ? 'true' : 'false';
+  document.getElementById('f-logo').value = (e.mostrar_logo !== false) ? 'true' : 'false';
+  document.getElementById('f-logourl').value = e.logo_url || '';
   document.getElementById('overlay').classList.add('on');
 }
 
@@ -474,6 +498,9 @@ async function guardarCliente(){
     tipo_negocio: document.getElementById('f-tipo').value,
     texto_boton: document.getElementById('f-boton').value.trim() || 'Cotizar por WhatsApp',
     muestra_precio: document.getElementById('f-precio').value === 'true',
+    mostrar_busqueda: document.getElementById('f-busqueda').value === 'true',
+    mostrar_logo: document.getElementById('f-logo').value === 'true',
+    logo_url: document.getElementById('f-logourl').value.trim() || null,
     plan_valor: plan
   };
 
