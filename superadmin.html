@@ -73,11 +73,39 @@
   .item .nom{font-size:14px}
   .item .acts{margin-left:auto;display:flex;gap:10px;color:var(--suave);font-size:16px}
   .item .acts span{cursor:pointer}
-  .miniimg{width:42px;height:42px;border-radius:8px;background:#eee;object-fit:cover;flex:0 0 auto}
-  .miniimg.ph{display:flex;align-items:center;justify-content:center;color:#bbb;font-size:18px}
+  .miniimg{width:42px;height:42px;border-radius:8px;background:#eee;object-fit:cover;flex:0 0 auto}  .miniimg.ph{display:flex;align-items:center;justify-content:center;color:#bbb;font-size:18px}
+
+  /* Pantalla de login */
+  #login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;z-index:100}
+  .login-box{background:var(--card);border:1px solid var(--linea);border-radius:18px;padding:32px 28px;width:100%;max-width:360px;text-align:center}
+  .login-ico{width:50px;height:50px;border-radius:12px;background:var(--azul);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 14px}
+  .login-box h2{font-size:19px;font-weight:600;margin-bottom:4px}
+  .login-box p{font-size:13px;color:var(--suave);margin-bottom:20px}
+  .login-box label{display:block;text-align:left;font-size:12px;color:var(--suave);margin:12px 0 4px}
+  .login-box input{width:100%;padding:11px;border:1px solid var(--linea);border-radius:9px;font-size:14px;font-family:inherit}
+  .login-box .btn{width:100%;margin-top:18px;padding:12px}
+  .login-error{color:var(--rojo);font-size:13px;margin-top:10px;min-height:18px}
 </style>
 </head>
 <body>
+
+<!-- ════════ PANTALLA DE LOGIN ════════ -->
+<div id="login-screen" style="display:none">
+  <div class="login-box">
+    <div class="login-ico">▦</div>
+    <h2>Fenlora Catálogos</h2>
+    <p>Panel de control privado</p>
+    <label>Correo</label>
+    <input id="login-email" type="email" placeholder="tucorreo@ejemplo.com" autocomplete="username">
+    <label>Contraseña</label>
+    <input id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password">
+    <div id="login-error" class="login-error"></div>
+    <button class="btn" id="btn-login" onclick="iniciarSesion()">Entrar</button>
+  </div>
+</div>
+
+<!-- ════════ APP (oculta hasta iniciar sesión) ════════ -->
+<div id="app" style="display:none">
 
 <div class="top">
   <div class="ico">▦</div>
@@ -85,6 +113,7 @@
     <div class="ti">Fenlora Catálogos</div>
     <div class="ts">Panel de control</div>
   </div>
+  <button class="btn sec" style="margin-left:auto" onclick="cerrarSesion()">Cerrar sesión</button>
 </div>
 
 <div class="wrap">
@@ -150,6 +179,8 @@
   </div>
 
 </div>
+
+</div><!-- fin #app -->
 
 <!-- Modal crear cliente -->
 <div class="overlay" id="overlay">
@@ -670,7 +701,58 @@ async function borrarProducto(id){
   cargarCatalogo();
 }
 
-cargar();
+// ══════════════════════════════════════════════════════════
+// LOGIN / SESIÓN
+// ══════════════════════════════════════════════════════════
+async function iniciarSesion(){
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const err = document.getElementById('login-error');
+  const btn = document.getElementById('btn-login');
+  err.textContent = '';
+  if (!email || !pass){ err.textContent = 'Escribe tu correo y contraseña.'; return; }
+  btn.textContent = 'Entrando…'; btn.disabled = true;
+
+  const { error } = await sb.auth.signInWithPassword({ email: email, password: pass });
+  btn.textContent = 'Entrar'; btn.disabled = false;
+
+  if (error){
+    err.textContent = 'Correo o contraseña incorrectos.';
+    return;
+  }
+  mostrarApp();
+}
+
+async function cerrarSesion(){
+  await sb.auth.signOut();
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-pass').value = '';
+}
+
+function mostrarApp(){
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  cargar();
+}
+
+// Al abrir: ¿hay sesión activa?
+async function verificarSesion(){
+  const { data } = await sb.auth.getSession();
+  if (data && data.session){
+    mostrarApp();      // ya tiene sesión: directo al panel
+  } else {
+    document.getElementById('login-screen').style.display = 'flex'; // pedir login
+  }
+}
+
+// Permitir entrar con la tecla Enter en el campo de contraseña
+document.addEventListener('DOMContentLoaded', ()=>{
+  const p = document.getElementById('login-pass');
+  if (p) p.addEventListener('keydown', e=>{ if(e.key==='Enter') iniciarSesion(); });
+});
+
+verificarSesion();
 </script>
 </body>
 </html>
