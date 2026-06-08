@@ -385,6 +385,11 @@
       <option value="carrusel">Carrusel debajo del encabezado</option>
       <option value="popup">Ventana emergente al entrar (como Samjuro)</option>
     </select>
+    <label>¿Cómo cierra los pedidos?</label>
+    <select id="f-modopedido">
+      <option value="whatsapp">Por WhatsApp (recomendado)</option>
+      <option value="pasarela">Pasarela de pago (simulada, igual avisa por WhatsApp)</option>
+    </select>
     <div class="botones">
       <button class="btn sec" style="flex:1" onclick="cerrarModal()">Cancelar</button>
       <button class="btn" style="flex:1" id="btn-guardar" onclick="guardarCliente()">Crear cliente</button>
@@ -718,6 +723,7 @@ function abrirModalNuevo(){
   document.getElementById('f-logo').value = 'true';
   document.getElementById('f-logourl').value = '';
   document.getElementById('f-promomodo').value = 'carrusel';
+  document.getElementById('f-modopedido').value = 'whatsapp';
   document.getElementById('overlay').classList.add('on');
 }
 
@@ -744,6 +750,7 @@ function editarCliente(id){
   document.getElementById('f-logo').value = (e.mostrar_logo !== false) ? 'true' : 'false';
   document.getElementById('f-logourl').value = e.logo_url || '';
   document.getElementById('f-promomodo').value = e.promo_modo || 'carrusel';
+  document.getElementById('f-modopedido').value = e.modo_pedido || 'whatsapp';
   document.getElementById('overlay').classList.add('on');
 }
 
@@ -782,6 +789,7 @@ async function guardarCliente(){
     mostrar_logo: document.getElementById('f-logo').value === 'true',
     logo_url: document.getElementById('f-logourl').value.trim() || null,
     promo_modo: document.getElementById('f-promomodo').value,
+    modo_pedido: document.getElementById('f-modopedido').value,
     plan_valor: plan
   };
 

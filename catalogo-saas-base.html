@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Catálogo</title>
+<title>Catálogo digital</title>
+<meta name="description" content="Catálogo digital de productos y servicios. Mira, elige y pide fácil desde tu celular.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Catálogo digital">
+<meta property="og:description" content="Mira nuestros productos y haz tu pedido en segundos.">
+<meta name="theme-color" content="#16456E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600;1,700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -37,8 +42,8 @@
   .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 78% -20%,rgba(255,255,255,.22),transparent 55%);pointer-events:none}
   .hero-inner{position:relative;z-index:1;animation:heroIn .9s cubic-bezier(.22,1,.36,1) both}
   @keyframes heroIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-  .hero-logo{max-height:100px;max-width:70%;width:auto;margin:0 auto 16px;display:block;object-fit:contain;filter:drop-shadow(0 3px 10px rgba(0,0,0,.25))}
-  @media(min-width:700px){.hero-logo{max-height:128px}}
+  .hero-logo{max-height:120px;max-width:78%;width:auto;margin:0 auto 10px;display:block;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,.28))}
+  @media(min-width:700px){.hero-logo{max-height:150px}}
   .hero-pill{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;padding:6px 16px;border:1px solid rgba(255,255,255,.4);border-radius:999px;background:rgba(255,255,255,.10);margin-bottom:14px}
   .hero h1{font-family:var(--serif);font-size:32px;font-weight:700;line-height:1.1}
   .hero .deco{width:46px;height:2px;background:rgba(255,255,255,.6);margin:14px auto 0;border-radius:2px}
@@ -176,6 +181,31 @@
   .promo-pop-foot{padding:14px 18px 18px}
   .promo-pop-btn{width:100%;border:none;background:var(--primario);color:#fff;font-size:15px;font-weight:700;font-family:inherit;padding:13px;border-radius:12px;cursor:pointer}
 
+  /* PASARELA DE PAGO (simulada) */
+  .pay{position:fixed;inset:0;z-index:95;display:none;align-items:center;justify-content:center;padding:16px}
+  .pay.show{display:flex}
+  .pay-ov{position:absolute;inset:0;background:rgba(20,15,10,.62);backdrop-filter:blur(3px)}
+  .pay-card{position:relative;z-index:1;width:100%;max-width:400px;max-height:92vh;overflow-y:auto;background:var(--card);border-radius:22px;box-shadow:0 24px 70px rgba(0,0,0,.45);animation:lbIn .35s cubic-bezier(.22,1,.36,1)}
+  .pay-head{padding:18px 20px;border-bottom:1px solid var(--linea);display:flex;align-items:center;gap:10px}
+  .pay-head .pt{font-family:var(--serif);font-size:18px;font-weight:700}
+  .pay-head .px{margin-left:auto;width:32px;height:32px;border:none;border-radius:50%;background:var(--bg);font-size:18px;cursor:pointer;color:var(--texto)}
+  .pay-body{padding:18px 20px}
+  .pay-total{display:flex;align-items:center;justify-content:space-between;background:var(--bg);border-radius:12px;padding:13px 15px;margin-bottom:16px}
+  .pay-total .l{font-size:13px;color:var(--suave)}
+  .pay-total .v{font-size:20px;font-weight:700;color:var(--primario)}
+  .pay-body label{display:block;font-size:12px;color:var(--suave);margin:11px 0 5px;font-weight:600}
+  .pay-body input{width:100%;padding:12px;border:1px solid var(--linea);border-radius:10px;font-size:14px;font-family:inherit;background:var(--card);color:var(--texto)}
+  .pay-row{display:flex;gap:10px}
+  .pay-row>div{flex:1}
+  .pay-btn{width:100%;border:none;background:var(--primario);color:#fff;font-size:15px;font-weight:700;font-family:inherit;padding:14px;border-radius:12px;cursor:pointer;margin-top:18px;display:flex;align-items:center;justify-content:center;gap:8px}
+  .pay-seg{display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;color:var(--suave);margin-top:12px}
+  .pay-seg svg{width:13px;height:13px}
+  .pay-ok{text-align:center;padding:34px 20px}
+  .pay-ok .check{width:64px;height:64px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;animation:lbIn .4s}
+  .pay-ok .check svg{width:34px;height:34px;fill:none;stroke:#fff;stroke-width:3}
+  .pay-ok .t{font-family:var(--serif);font-size:22px;font-weight:700}
+  .pay-ok .d{font-size:13.5px;color:var(--suave);margin-top:8px;line-height:1.5}
+
   /* COLECCIONES (vitrina destacada) */
   .cols{display:none;padding:18px 16px 2px;max-width:1180px;margin:0 auto}
   .cols-tit{font-family:var(--serif);font-size:19px;font-weight:700;margin-bottom:13px;color:var(--texto)}
@@ -266,6 +296,35 @@
     </div>
     <div class="promo-pop-foot">
       <button class="promo-pop-btn" onclick="cerrarPromoPop()">Ver catálogo</button>
+    </div>
+  </div>
+</div>
+
+<div class="pay" id="pay">
+  <div class="pay-ov" onclick="cerrarPago()"></div>
+  <div class="pay-card">
+    <div class="pay-head">
+      <div class="pt">Pago seguro</div>
+      <button class="px" onclick="cerrarPago()">&times;</button>
+    </div>
+    <div class="pay-body" id="pay-form">
+      <div class="pay-total"><span class="l">Total a pagar</span><span class="v" id="pay-total">$0</span></div>
+      <label>Nombre en la tarjeta</label>
+      <input id="pay-nombre" placeholder="Como aparece en la tarjeta">
+      <label>Número de tarjeta</label>
+      <input id="pay-num" inputmode="numeric" placeholder="0000 0000 0000 0000" maxlength="19" oninput="formatoTarjeta(this)">
+      <div class="pay-row">
+        <div><label>Vence (MM/AA)</label><input id="pay-exp" inputmode="numeric" placeholder="MM/AA" maxlength="5" oninput="formatoExp(this)"></div>
+        <div><label>CVV</label><input id="pay-cvv" inputmode="numeric" placeholder="123" maxlength="4"></div>
+      </div>
+      <button class="pay-btn" onclick="procesarPago()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:17px;height:17px"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg> Pagar <span id="pay-btn-total"></span></button>
+      <div class="pay-seg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg> Pago cifrado y protegido</div>
+    </div>
+    <div class="pay-ok" id="pay-ok" style="display:none">
+      <div class="check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+      <div class="t">¡Pago exitoso!</div>
+      <div class="d" id="pay-ok-msg">Tu pedido fue confirmado.</div>
+      <button class="pay-btn" onclick="cerrarPago()" style="margin-top:20px">Listo</button>
     </div>
   </div>
 </div>
@@ -487,11 +546,14 @@ function aplicarIdentidad(emp){
   }
   const tag=tagNicho(emp);
   document.getElementById('nom-empresa').textContent=emp.nombre;
-  document.title=emp.nombre;
+  document.title=emp.nombre+' · Catálogo';
+  var ogt=document.querySelector('meta[property="og:title"]'); if(ogt)ogt.setAttribute('content',emp.nombre);
+  var ogd=document.querySelector('meta[property="og:description"]'); if(ogd)ogd.setAttribute('content','Mira los productos de '+emp.nombre+' y haz tu pedido en segundos.');
+  var mdesc=document.querySelector('meta[name="description"]'); if(mdesc)mdesc.setAttribute('content','Catálogo digital de '+emp.nombre+'. Mira, elige y pide fácil desde tu celular.');
   document.getElementById('sp-nombre').textContent=emp.nombre;
   document.getElementById('sp-tagline').textContent=tag;
   const pill=document.getElementById('hero-pill');
-  pill.textContent=tag; pill.style.display='inline-block';
+  pill.textContent=tag;
   const mostrarLogo=emp.logo_url&&emp.mostrar_logo!==false;
   if(mostrarLogo){
     document.getElementById('sp-visual').innerHTML='<img class="sp-logo" src="'+esc(emp.logo_url)+'" alt="'+esc(emp.nombre)+'">';
@@ -499,8 +561,13 @@ function aplicarIdentidad(emp){
     const img=document.createElement('img');
     img.className='hero-logo'; img.src=emp.logo_url; img.alt=emp.nombre;
     cab.insertBefore(img,cab.firstChild);
+    // Logo protagonista: el nombre en texto y la línea se ocultan (el logo ya identifica al negocio)
+    document.getElementById('nom-empresa').style.display='none';
+    const deco=cab.querySelector('.deco'); if(deco)deco.style.display='none';
+    pill.style.display='inline-block';
   } else {
     document.getElementById('sp-mark').textContent=iniciales(emp.nombre);
+    pill.style.display='inline-block';
   }
   if(emp.mostrar_busqueda!==false)document.getElementById('barra-busqueda').style.display='block';
   pintarFab();
@@ -624,18 +691,77 @@ function pintarCarrito(){
     document.getElementById('btn-fin').textContent='Pedir cotización por WhatsApp';
   }
 }
+function pedidoTexto(){
+  let msg='Hola, quiero pedir:\n';
+  let total=0;
+  CARRITO.forEach(function(it){
+    const p=prodPorId(it.id);
+    if(p){
+      msg+='• '+p.nombre+' x'+it.cant;
+      if(EMPRESA.muestra_precio&&p.precio!=null){const sub=Number(p.precio)*it.cant;total+=sub;msg+=' — $'+sub.toLocaleString('es-CO');}
+      msg+='\n';
+    }
+  });
+  if(EMPRESA.muestra_precio&&total>0)msg+='\nTotal: $'+total.toLocaleString('es-CO');
+  return {msg:msg,total:total};
+}
+function enviarPedidoWA(){
+  const wa=(EMPRESA.whatsapp||'').replace(/\D/g,'');
+  const {msg}=pedidoTexto();
+  if(wa)window.open('https://wa.me/'+wa+'?text='+encodeURIComponent(msg),'_blank');
+  else alert('Este negocio no tiene WhatsApp configurado.');
+}
 function finalizarPedido(){
   if(!CARRITO.length)return;
-  if(EMPRESA.muestra_precio){
-    document.getElementById('cart-body').innerHTML='<div class="estado" style="padding:50px 20px"><div style="font-size:40px;margin-bottom:14px">🛍️</div>¡Tu pedido está listo!<br><br>El pago seguro llega en el siguiente paso.</div>';
+  const modo=EMPRESA.modo_pedido||'whatsapp';
+  if(modo==='pasarela'&&EMPRESA.muestra_precio){
+    abrirPago();
+  } else {
+    enviarPedidoWA();
+    document.getElementById('cart-body').innerHTML='<div class="estado" style="padding:50px 20px"><div style="font-size:40px;margin-bottom:14px">🛍️</div>¡Tu pedido fue enviado por WhatsApp!</div>';
     document.getElementById('cart-foot').style.display='none';
     CARRITO=[]; actualizarContadores();
-  } else {
-    const wa=(EMPRESA.whatsapp||'').replace(/\D/g,'');
-    let msg='Hola, quiero pedir:\n';
-    CARRITO.forEach(function(it){const p=prodPorId(it.id);if(p)msg+='• '+p.nombre+' x'+it.cant+'\n';});
-    if(wa)window.open('https://wa.me/'+wa+'?text='+encodeURIComponent(msg),'_blank');
   }
+}
+/* ─── PASARELA DE PAGO (simulada) ─── */
+function abrirPago(){
+  const {total}=pedidoTexto();
+  document.getElementById('pay-total').textContent='$'+total.toLocaleString('es-CO');
+  document.getElementById('pay-btn-total').textContent=total>0?'$'+total.toLocaleString('es-CO'):'';
+  document.getElementById('pay-form').style.display='block';
+  document.getElementById('pay-ok').style.display='none';
+  ['pay-nombre','pay-num','pay-exp','pay-cvv'].forEach(function(id){document.getElementById(id).value='';});
+  cerrarPaneles();
+  document.getElementById('pay').classList.add('show');
+}
+function cerrarPago(){document.getElementById('pay').classList.remove('show');}
+function formatoTarjeta(el){
+  let v=el.value.replace(/\D/g,'').slice(0,16);
+  el.value=v.replace(/(.{4})/g,'$1 ').trim();
+}
+function formatoExp(el){
+  let v=el.value.replace(/\D/g,'').slice(0,4);
+  if(v.length>=3)v=v.slice(0,2)+'/'+v.slice(2);
+  el.value=v;
+}
+function procesarPago(){
+  const num=document.getElementById('pay-num').value.replace(/\s/g,'');
+  const exp=document.getElementById('pay-exp').value;
+  const cvv=document.getElementById('pay-cvv').value;
+  const nom=document.getElementById('pay-nombre').value.trim();
+  if(!nom||num.length<13||exp.length<5||cvv.length<3){alert('Completa los datos de la tarjeta para continuar.');return;}
+  // Pago SIMULADO: no se cobra nada. Se confirma y se avisa al negocio por WhatsApp.
+  document.getElementById('pay-form').style.display='none';
+  document.getElementById('pay-ok').style.display='block';
+  const wa=(EMPRESA.whatsapp||'').replace(/\D/g,'');
+  document.getElementById('pay-ok-msg').innerHTML=wa
+    ? 'Tu pedido fue confirmado. Te conectamos con el negocio por WhatsApp para coordinar la entrega.'
+    : 'Tu pedido fue confirmado.';
+  if(wa){
+    const {msg}=pedidoTexto();
+    setTimeout(function(){window.open('https://wa.me/'+wa+'?text='+encodeURIComponent('✅ Pedido confirmado (pago simulado)\n\n'+msg),'_blank');},1200);
+  }
+  CARRITO=[]; actualizarContadores(); pintarCarrito();
 }
 
 /* ─── FAVORITOS ─── */
