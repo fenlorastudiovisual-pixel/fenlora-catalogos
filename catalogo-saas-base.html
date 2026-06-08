@@ -38,16 +38,16 @@
   @keyframes spLoad{to{width:100%}}
 
   /* HERO */
-  .hero{position:relative;overflow:hidden;text-align:center;color:#fff;background:linear-gradient(135deg,var(--primario),var(--secundario));padding:42px 20px 38px}
+  .hero{position:relative;overflow:hidden;text-align:center;color:#fff;background:linear-gradient(135deg,var(--primario),var(--secundario));padding:22px 20px 18px}
   .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 78% -20%,rgba(255,255,255,.22),transparent 55%);pointer-events:none}
   .hero-inner{position:relative;z-index:1;animation:heroIn .9s cubic-bezier(.22,1,.36,1) both}
   @keyframes heroIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-  .hero-logo{max-height:200px;max-width:90%;width:auto;margin:0 auto 10px;display:block;object-fit:contain;filter:drop-shadow(0 5px 16px rgba(0,0,0,.3))}
-  @media(min-width:700px){.hero-logo{max-height:260px}}
+  .hero-logo{max-height:150px;max-width:82%;width:auto;margin:0 auto 8px;display:block;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,.28))}
+  @media(min-width:700px){.hero-logo{max-height:190px}}
   .hero-pill{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;padding:6px 16px;border:1px solid rgba(255,255,255,.4);border-radius:999px;background:rgba(255,255,255,.10);margin-bottom:14px}
   .hero h1{font-family:var(--serif);font-size:32px;font-weight:700;line-height:1.1}
   .hero .deco{width:46px;height:2px;background:rgba(255,255,255,.6);margin:14px auto 0;border-radius:2px}
-  @media(min-width:700px){.hero{padding:56px 20px 48px}.hero h1{font-size:44px}}
+  @media(min-width:700px){.hero{padding:30px 20px 24px}.hero h1{font-size:44px}}
 
   /* DEMO BAR */
   .demo-bar{display:none;background:linear-gradient(135deg,var(--primario),var(--secundario));color:#fff;padding:14px 16px;text-align:center}
@@ -500,10 +500,12 @@ function pintarSelectorTemas(emp){
 function iniciales(n){const p=(n||'').trim().split(/\s+/).filter(Boolean);if(!p.length)return '·';if(p.length===1)return p[0].slice(0,2).toUpperCase();return (p[0][0]+p[1][0]).toUpperCase();}
 function tagNicho(emp){
   if(emp.tipo_negocio==='servicio')return 'Servicios';
-  const n=emp.tipo_nicho||'';
-  if(n.indexOf('belleza')>=0||n==='cosmeticos')return 'Catálogo de Belleza';
-  if(n==='distribuidora'||n==='mayorista')return 'Distribuidora';
-  return 'Catálogo';
+  const n=(emp.tipo_nicho||'').toLowerCase();
+  const map={ropa:'Moda',ferreteria:'Ferretería',salon:'Barbería',gimnasio:'Fitness',belleza_dist:'Belleza',cosmeticos:'Belleza',joyeria:'Joyería',muebles:'Muebles',spa:'Spa',distribuidora:'Distribuidora',mayorista:'Distribuidora',papeleria:'Papelería',repuestos:'Repuestos'};
+  if(map[n])return map[n];
+  if(n.indexOf('belleza')>=0)return 'Belleza';
+  if(!n)return 'Tienda';
+  return n.charAt(0).toUpperCase()+n.slice(1);
 }
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function prodPorId(id){return PRODUCTOS.find(function(p){return p.id===id;});}
