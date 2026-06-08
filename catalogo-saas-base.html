@@ -100,6 +100,13 @@
   .cat-loader span{font-size:13px;color:var(--suave);letter-spacing:.04em}
   footer{text-align:center;padding:30px 16px 40px;color:var(--suave);font-size:11px;letter-spacing:.05em;border-top:1px solid var(--linea);margin-top:14px}
   footer b{color:var(--texto);font-weight:600}
+  /* ════ BANNER PRUEBA (solo demos) ════ */
+  .demo-bar{display:none;background:linear-gradient(135deg,var(--primario),var(--secundario));color:#fff;padding:14px 16px;text-align:center}
+  .demo-bar .dt{font-size:13.5px;font-weight:600;margin-bottom:9px}
+  .demo-bar .dform{display:flex;gap:8px;max-width:420px;margin:0 auto}
+  .demo-bar input{flex:1;padding:11px 13px;border:none;border-radius:10px;font-size:14px;font-family:inherit;outline:none;color:var(--texto)}
+  .demo-bar button{border:none;background:#fff;color:var(--primario);font-weight:700;font-size:13.5px;font-family:inherit;padding:0 18px;border-radius:10px;cursor:pointer;white-space:nowrap}
+  .demo-bar .ok{font-size:12.5px;margin-top:8px;opacity:.95;display:none}
 </style>
 </head>
 <body>
@@ -120,6 +127,15 @@
     <div class="deco"></div>
   </div>
 </header>
+
+<div class="demo-bar" id="demo-bar">
+  <div class="dt">¿Quieres ver cómo te llegarían los pedidos? Pon tu WhatsApp 👇</div>
+  <div class="dform">
+    <input id="demo-wa" type="tel" inputmode="numeric" placeholder="Ej: 3001234567">
+    <button onclick="activarPrueba()">Probar</button>
+  </div>
+  <div class="ok" id="demo-ok">✓ Listo. Ahora toca el botón de WhatsApp y el mensaje te llegará a ti.</div>
+</div>
 
 <div class="barra">
   <div class="cats" id="cats"></div>
@@ -157,7 +173,7 @@ function detectarSubdominio(){
   return 'samjuro';
 }
 
-let EMPRESA = null, PRODUCTOS = [], CATEGORIAS = [], categoriaActiva = 'todas';
+let EMPRESA = null, PRODUCTOS = [], CATEGORIAS = [], categoriaActiva = 'todas', WA_PRUEBA = '';
 
 function iniciales(nombre){
   const p = (nombre||'').trim().split(/\s+/).filter(Boolean);
@@ -238,14 +254,48 @@ function aplicarIdentidad(emp){
     document.getElementById('barra-busqueda').style.display = 'block';
   }
 
-  // Botón flotante de WhatsApp (para clientes y vendedores externos)
-  const wa = (emp.whatsapp || '').replace(/\D/g,'');
+  // Botón flotante de WhatsApp (usa el número activo: prueba o el del negocio)
+  pintarFab();
+
+  // Si es un DEMO, mostrar la casilla para que el prospecto ponga su WhatsApp
+  if ((emp.subdominio || '').indexOf('demo-') === 0){
+    document.getElementById('demo-bar').style.display = 'block';
+  }
+}
+
+// Número al que van los mensajes: el de prueba (si el cliente lo puso) o el del negocio
+function numeroActivo(){
+  if (WA_PRUEBA) return WA_PRUEBA;
+  return (EMPRESA && EMPRESA.whatsapp ? EMPRESA.whatsapp : '').replace(/\D/g,'');
+}
+
+function pintarFab(){
+  const wa = numeroActivo();
+  const fab = document.getElementById('wa-fab');
   if (wa){
-    const fab = document.getElementById('wa-fab');
-    const msg = encodeURIComponent('Hola, vi el catálogo de '+emp.nombre+' y me gustaría más información.');
+    const msg = encodeURIComponent('Hola, vi el catálogo de '+EMPRESA.nombre+' y me gustaría más información.');
     fab.href = 'https://wa.me/'+wa+'?text='+msg;
     fab.style.display = 'flex';
+  } else {
+    fab.style.display = 'none';
   }
+}
+
+// El prospecto pone su número en el demo: a partir de ahí todo le escribe a él
+function activarPrueba(){
+  const input = document.getElementById('demo-wa');
+  let num = (input.value || '').replace(/\D/g,'');
+  if (num.length < 10){
+    input.focus();
+    input.style.boxShadow = '0 0 0 3px rgba(255,255,255,.6)';
+    setTimeout(function(){ input.style.boxShadow = 'none'; }, 1200);
+    return;
+  }
+  if (num.length === 10) num = '57' + num; // Colombia por defecto
+  WA_PRUEBA = num;
+  document.getElementById('demo-ok').style.display = 'block';
+  pintarFab();
+  pintarProductos();
 }
 
 function pintarCategorias(){
@@ -291,7 +341,7 @@ function pintarProductos(){
 
   const muestraPrecio = EMPRESA.muestra_precio;
   const textoBoton = EMPRESA.texto_boton || 'Pedir';
-  const wa = (EMPRESA.whatsapp || '').replace(/\D/g,'');
+  const wa = numeroActivo();
   const verCat = (categoriaActiva === 'todas' && CATEGORIAS.length > 1);
   const waIcon = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.7 4.8-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A8 8 0 1112 20zm4.4-6c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1l-.7.9c-.1.2-.3.2-.5.1a6.5 6.5 0 01-1.9-1.2 7.2 7.2 0 01-1.3-1.7c-.1-.2 0-.4.1-.5l.4-.5.2-.4v-.4l-.8-1.8c-.2-.5-.4-.4-.5-.4h-.5a.9.9 0 00-.7.3 2.8 2.8 0 00-.9 2.1c0 1.2.9 2.4 1 2.6.1.2 1.8 2.8 4.4 3.9.6.3 1.1.4 1.5.5.6.2 1.2.2 1.6.1.5-.1 1.4-.6 1.6-1.1.2-.6.2-1 .1-1.1l-.4-.2z"/></svg>';
 
