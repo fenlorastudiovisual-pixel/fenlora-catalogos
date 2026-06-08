@@ -196,32 +196,12 @@
       <div>
         <label>Nicho</label>
         <select id="f-nicho">
-          <optgroup label="Producto con precio">
-            <option value="ferreteria">Ferretería</option>
-            <option value="ropa">Ropa / Calzado</option>
-            <option value="papeleria">Papelería</option>
-            <option value="joyeria">Joyería / Accesorios</option>
-            <option value="muebles">Muebles / Hogar</option>
-            <option value="tecnologia">Tecnología / Celulares</option>
-            <option value="repuestos">Repuestos</option>
-            <option value="producto_otro">Otro (producto)</option>
-          </optgroup>
-          <optgroup label="Distribuidora / Mayorista">
-            <option value="distribuidora">Distribuidora</option>
-            <option value="mayorista">Mayorista / Importadora</option>
-          </optgroup>
-          <optgroup label="Servicios">
-            <option value="salon">Salón / Barbería</option>
-            <option value="spa">Spa / Estética</option>
-            <option value="taller">Taller / Mecánica</option>
-            <option value="gimnasio">Gimnasio</option>
-            <option value="inmobiliaria">Inmobiliaria</option>
-            <option value="servicio_otro">Otro (servicio)</option>
-          </optgroup>
-          <optgroup label="Belleza especializado">
-            <option value="belleza_dist">Distribuidora de belleza</option>
-            <option value="cosmeticos">Cosméticos / Esmaltes</option>
-          </optgroup>
+          <option value="distribuidora">Distribuidora</option>
+          <option value="ferreteria">Ferretería</option>
+          <option value="ropa">Ropa / Calzado</option>
+          <option value="restaurante">Restaurante</option>
+          <option value="salon">Salón / Belleza</option>
+          <option value="otro">Otro</option>
         </select>
       </div>
     </div>
@@ -263,24 +243,6 @@
         <input id="f-plan" type="number" placeholder="50000">
       </div>
     </div>
-    <div class="fila">
-      <div>
-        <label>Barra de búsqueda</label>
-        <select id="f-busqueda">
-          <option value="true">Sí</option>
-          <option value="false">No</option>
-        </select>
-      </div>
-      <div>
-        <label>Mostrar logo</label>
-        <select id="f-logo">
-          <option value="true">Sí</option>
-          <option value="false">No</option>
-        </select>
-      </div>
-    </div>
-    <label>URL del logo (opcional)</label>
-    <input id="f-logourl" placeholder="https://...">
     <div class="botones">
       <button class="btn sec" style="flex:1" onclick="cerrarModal()">Cancelar</button>
       <button class="btn" style="flex:1" id="btn-guardar" onclick="guardarCliente()">Crear cliente</button>
@@ -459,9 +421,6 @@ function abrirModalNuevo(){
   document.getElementById('f-boton').value = '';
   document.getElementById('f-precio').value = 'true';
   document.getElementById('f-plan').value = '';
-  document.getElementById('f-busqueda').value = 'true';
-  document.getElementById('f-logo').value = 'true';
-  document.getElementById('f-logourl').value = '';
   document.getElementById('overlay').classList.add('on');
 }
 
@@ -482,9 +441,6 @@ function editarCliente(id){
   document.getElementById('f-boton').value = e.texto_boton || '';
   document.getElementById('f-precio').value = e.muestra_precio ? 'true' : 'false';
   document.getElementById('f-plan').value = e.plan_valor || '';
-  document.getElementById('f-busqueda').value = (e.mostrar_busqueda !== false) ? 'true' : 'false';
-  document.getElementById('f-logo').value = (e.mostrar_logo !== false) ? 'true' : 'false';
-  document.getElementById('f-logourl').value = e.logo_url || '';
   document.getElementById('overlay').classList.add('on');
 }
 
@@ -518,9 +474,6 @@ async function guardarCliente(){
     tipo_negocio: document.getElementById('f-tipo').value,
     texto_boton: document.getElementById('f-boton').value.trim() || 'Cotizar por WhatsApp',
     muestra_precio: document.getElementById('f-precio').value === 'true',
-    mostrar_busqueda: document.getElementById('f-busqueda').value === 'true',
-    mostrar_logo: document.getElementById('f-logo').value === 'true',
-    logo_url: document.getElementById('f-logourl').value.trim() || null,
     plan_valor: plan
   };
 
