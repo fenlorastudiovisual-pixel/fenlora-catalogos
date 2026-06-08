@@ -355,6 +355,15 @@
     </div>
     <div class="fila">
       <div>
+        <label>Primer vencimiento de pago</label>
+        <input id="f-fechavence" type="date">
+      </div>
+      <div style="display:flex;align-items:flex-end">
+        <span style="font-size:11.5px;color:var(--suave);line-height:1.4">Si lo dejas vacío, se pone a 30 días desde hoy.</span>
+      </div>
+    </div>
+    <div class="fila">
+      <div>
         <label>Barra de búsqueda</label>
         <select id="f-busqueda">
           <option value="true">Sí</option>
@@ -576,9 +585,16 @@ function estadoVisual(emp){
     return {clase:'b-rojo', txt:'Suspendido · no pagó'};
   }
   const d = diasPara(emp.fecha_vence);
-  if (d !== null && d < 0) return {clase:'b-rojo', txt:'Vencido hace '+Math.abs(d)+' días'};
-  if (d !== null && d <= 5) return {clase:'b-amar', txt:'Vence en '+d+' días'};
-  return {clase:'b-verde', txt:'Al día'};
+  const f = fmtFecha(emp.fecha_vence);
+  if (d !== null && d < 0) return {clase:'b-rojo', txt:'Vencido hace '+Math.abs(d)+' días · '+f};
+  if (d !== null && d <= 5) return {clase:'b-amar', txt:'Vence en '+d+' días · '+f};
+  return {clase:'b-verde', txt:'Al día · vence '+f};
+}
+function fmtFecha(iso){
+  if (!iso) return 'sin fecha';
+  const m = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const d = new Date(iso+'T00:00:00');
+  return d.getDate()+' '+m[d.getMonth()]+' '+d.getFullYear();
 }
 
 function pintarStats(){
@@ -624,6 +640,7 @@ function pintarLista(){
       + '<span title="Gestionar catálogo" onclick="abrirCatalogo(\''+e.id+'\')">📦</span>'
       + '<span title="Ver catálogo" onclick="verCatalogo(\''+e.subdominio+'\')">👁</span>'
       + '<span title="Editar" onclick="editarCliente(\''+e.id+'\')">✏️</span>'
+      + '<span title="Registrar pago (suma 1 mes)" onclick="registrarPago(\''+e.id+'\')">💵</span>'
       + togglePago
       + '<span title="Recordar pago" onclick="recordarPago(\''+e.id+'\')">🔔</span>'
       + '<span title="Borrar" onclick="borrarCliente(\''+e.id+'\')">🗑️</span>'
@@ -645,6 +662,20 @@ async function reactivar(id){
   const fecha = new Date(); fecha.setDate(fecha.getDate()+dias);
   const iso = fecha.toISOString().slice(0,10);
   await sb.from('empresas').update({estado_pago:'al_dia', activo:true, fecha_vence:iso}).eq('id', id);
+  cargar();
+}
+async function registrarPago(id){
+  const e = EMPRESAS.find(x=>x.id===id);
+  if (!e) return;
+  // Suma 1 mes: desde la fecha de vencimiento si aún no ha pasado, o desde hoy si ya venció.
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  let base = e.fecha_vence ? new Date(e.fecha_vence+'T00:00:00') : new Date(hoy);
+  if (base < hoy) base = new Date(hoy);
+  base.setMonth(base.getMonth()+1);
+  const iso = base.toISOString().slice(0,10);
+  if (!confirm('¿Registrar pago de "'+e.nombre+'"?\n\nNuevo vencimiento: '+fmtFecha(iso))) return;
+  const { error } = await sb.from('empresas').update({estado_pago:'al_dia', activo:true, fecha_vence:iso}).eq('id', id);
+  if (error){ alert('Error: '+error.message); return; }
   cargar();
 }
 function recordarPago(id){
@@ -682,6 +713,7 @@ function abrirModalNuevo(){
   document.getElementById('f-boton').value = '';
   document.getElementById('f-precio').value = 'true';
   document.getElementById('f-plan').value = '';
+  document.getElementById('f-fechavence').value = '';
   document.getElementById('f-busqueda').value = 'true';
   document.getElementById('f-logo').value = 'true';
   document.getElementById('f-logourl').value = '';
@@ -707,6 +739,7 @@ function editarCliente(id){
   document.getElementById('f-boton').value = e.texto_boton || '';
   document.getElementById('f-precio').value = e.muestra_precio ? 'true' : 'false';
   document.getElementById('f-plan').value = e.plan_valor || '';
+  document.getElementById('f-fechavence').value = e.fecha_vence || '';
   document.getElementById('f-busqueda').value = (e.mostrar_busqueda !== false) ? 'true' : 'false';
   document.getElementById('f-logo').value = (e.mostrar_logo !== false) ? 'true' : 'false';
   document.getElementById('f-logourl').value = e.logo_url || '';
@@ -752,8 +785,11 @@ async function guardarCliente(){
     plan_valor: plan
   };
 
+  const fechaVenceManual = document.getElementById('f-fechavence').value;
+
   if (EDITANDO){
     // ── EDITAR cliente existente ──
+    if (fechaVenceManual) datos.fecha_vence = fechaVenceManual;
     const { error } = await sb.from('empresas').update(datos).eq('id', EDITANDO);
     btn.textContent = textoOriginal; btn.disabled = false;
     if (error){ alert('Error al guardar: '+error.message); return; }
@@ -766,11 +802,17 @@ async function guardarCliente(){
       btn.textContent = textoOriginal; btn.disabled = false;
       return;
     }
-    const fecha = new Date(); fecha.setDate(fecha.getDate()+30);
+    let iso;
+    if (fechaVenceManual){
+      iso = fechaVenceManual;
+    } else {
+      const fecha = new Date(); fecha.setDate(fecha.getDate()+30);
+      iso = fecha.toISOString().slice(0,10);
+    }
     datos.subdominio = sub;
     datos.estado_pago = 'al_dia';
     datos.activo = true;
-    datos.fecha_vence = fecha.toISOString().slice(0,10);
+    datos.fecha_vence = iso;
     const { error } = await sb.from('empresas').insert(datos);
     btn.textContent = textoOriginal; btn.disabled = false;
     if (error){ alert('Error al crear: '+error.message); return; }
