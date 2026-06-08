@@ -161,6 +161,21 @@
   .promo-dots span{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.55);transition:all .2s;cursor:pointer}
   .promo-dots span.on{background:#fff;width:18px;border-radius:4px}
 
+  /* POPUP DE PROMO (modo Samjuro, al entrar) */
+  .promo-pop{position:fixed;inset:0;z-index:88;display:none;align-items:center;justify-content:center;padding:18px}
+  .promo-pop.show{display:flex}
+  .promo-pop-ov{position:absolute;inset:0;background:rgba(20,15,10,.62);backdrop-filter:blur(3px)}
+  .promo-pop-card{position:relative;z-index:1;width:100%;max-width:400px;background:var(--card);border-radius:22px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.45);animation:lbIn .35s cubic-bezier(.22,1,.36,1)}
+  .promo-pop-x{position:absolute;top:11px;right:11px;z-index:3;width:34px;height:34px;border:none;border-radius:50%;background:rgba(255,255,255,.92);font-size:19px;cursor:pointer;color:#1F1B17;box-shadow:0 2px 10px rgba(0,0,0,.2)}
+  .promo-pop-carru{position:relative;overflow:hidden}
+  .promo-pop .promo-track{display:flex;transition:transform .4s cubic-bezier(.22,1,.36,1)}
+  .promo-pop .promo-slide{min-width:100%;aspect-ratio:4/5;max-height:62vh}
+  .promo-pop-dots{position:absolute;bottom:12px;left:0;right:0;display:flex;gap:6px;justify-content:center;z-index:2}
+  .promo-pop-dots span{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.55);transition:all .2s;cursor:pointer}
+  .promo-pop-dots span.on{background:#fff;width:18px;border-radius:4px}
+  .promo-pop-foot{padding:14px 18px 18px}
+  .promo-pop-btn{width:100%;border:none;background:var(--primario);color:#fff;font-size:15px;font-weight:700;font-family:inherit;padding:13px;border-radius:12px;cursor:pointer}
+
   footer{text-align:center;padding:24px 16px 28px;color:var(--suave);font-size:11px;border-top:1px solid var(--linea);margin-top:10px}
   footer b{color:var(--texto);font-weight:600}
 
@@ -224,6 +239,20 @@
 <div class="promos" id="promos">
   <div class="promo-track" id="promo-track"></div>
   <div class="promo-dots" id="promo-dots"></div>
+</div>
+
+<div class="promo-pop" id="promo-pop">
+  <div class="promo-pop-ov" onclick="cerrarPromoPop()"></div>
+  <div class="promo-pop-card">
+    <button class="promo-pop-x" onclick="cerrarPromoPop()">&times;</button>
+    <div class="promo-pop-carru">
+      <div class="promo-track" id="promo-pop-track"></div>
+      <div class="promo-pop-dots" id="promo-pop-dots"></div>
+    </div>
+    <div class="promo-pop-foot">
+      <button class="promo-pop-btn" onclick="cerrarPromoPop()">Ver catálogo</button>
+    </div>
+  </div>
 </div>
 
 <div class="barra">
@@ -607,15 +636,11 @@ function pintarFavoritos(){
   body.innerHTML=html;
 }
 
-/* ─── PROMOS (carrusel) ─── */
-let PROMO_IDX=0, promoTimer=null;
-function pintarPromos(){
-  const cont=document.getElementById('promos');
-  const track=document.getElementById('promo-track');
-  const dots=document.getElementById('promo-dots');
-  if(!PROMOS.length){cont.style.display='none';return;}
+/* ─── PROMOS (carrusel o popup) ─── */
+let PROMO_IDX=0, promoTimer=null, PROMO_TRACK='promo-track', PROMO_DOTS='promo-dots';
+function slidesPromo(){
   const muestraPrecio=EMPRESA.muestra_precio;
-  track.innerHTML=PROMOS.map(function(pr){
+  return PROMOS.map(function(pr){
     const bg=pr.imagen?'style="background-image:url(\''+esc(pr.imagen)+'\')"':'';
     let badge='';
     if(pr.descuento)badge='<div class="promo-badge">-'+pr.descuento+'%</div>';
@@ -625,23 +650,47 @@ function pintarPromos(){
       +(pr.descripcion?'<div class="promo-des">'+esc(pr.descripcion)+'</div>':'')
       +'</div></div>';
   }).join('');
+}
+function dotsPromo(onclickName){
+  if(PROMOS.length<2)return '';
+  return PROMOS.map(function(p,i){return '<span class="'+(i===0?'on':'')+'" onclick="'+onclickName+'('+i+')"></span>';}).join('');
+}
+function pintarPromos(){
+  if(!PROMOS.length){document.getElementById('promos').style.display='none';return;}
+  const modo=EMPRESA.promo_modo||'carrusel';
   PROMO_IDX=0;
-  track.style.transform='translateX(0)';
-  const varias=PROMOS.length>1;
-  dots.innerHTML=varias?PROMOS.map(function(p,i){return '<span class="'+(i===0?'on':'')+'" onclick="promoIr('+i+')"></span>';}).join(''):'';
-  cont.style.display='block';
+  if(modo==='popup'){
+    PROMO_TRACK='promo-pop-track'; PROMO_DOTS='promo-pop-dots';
+    document.getElementById('promos').style.display='none';
+    document.getElementById('promo-pop-track').innerHTML=slidesPromo();
+    document.getElementById('promo-pop-track').style.transform='translateX(0)';
+    document.getElementById('promo-pop-dots').innerHTML=dotsPromo('promoIr');
+    setTimeout(function(){ document.getElementById('promo-pop').classList.add('show'); }, 900);
+  } else {
+    PROMO_TRACK='promo-track'; PROMO_DOTS='promo-dots';
+    const cont=document.getElementById('promos');
+    document.getElementById('promo-track').innerHTML=slidesPromo();
+    document.getElementById('promo-track').style.transform='translateX(0)';
+    document.getElementById('promo-dots').innerHTML=dotsPromo('promoIr');
+    cont.style.display='block';
+  }
   if(promoTimer)clearInterval(promoTimer);
-  if(varias)promoTimer=setInterval(function(){promoMover(1);},4500);
+  if(PROMOS.length>1)promoTimer=setInterval(function(){promoMover(1);},4500);
+}
+function cerrarPromoPop(){
+  document.getElementById('promo-pop').classList.remove('show');
+  if(promoTimer)clearInterval(promoTimer);
 }
 function promoMover(d){if(!PROMOS.length)return;PROMO_IDX=(PROMO_IDX+d+PROMOS.length)%PROMOS.length;aplicarPromo();}
 function promoIr(i){PROMO_IDX=i;aplicarPromo();}
 function aplicarPromo(){
-  document.getElementById('promo-track').style.transform='translateX(-'+(PROMO_IDX*100)+'%)';
-  document.querySelectorAll('#promo-dots span').forEach(function(s,i){s.classList.toggle('on',i===PROMO_IDX);});
+  const tr=document.getElementById(PROMO_TRACK);
+  if(tr)tr.style.transform='translateX(-'+(PROMO_IDX*100)+'%)';
+  document.querySelectorAll('#'+PROMO_DOTS+' span').forEach(function(s,i){s.classList.toggle('on',i===PROMO_IDX);});
 }
 (function(){
   let x0=null;
-  document.addEventListener('touchstart',function(e){if(e.target.closest('.promos'))x0=e.touches[0].clientX;},{passive:true});
+  document.addEventListener('touchstart',function(e){if(e.target.closest('.promos')||e.target.closest('.promo-pop-carru'))x0=e.touches[0].clientX;},{passive:true});
   document.addEventListener('touchend',function(e){
     if(x0===null)return;
     const dx=e.changedTouches[0].clientX-x0;
