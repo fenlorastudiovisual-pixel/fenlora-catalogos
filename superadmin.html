@@ -463,7 +463,9 @@ function pintarDemos(){
       + '<div class="demo-acts">'
       + '<button class="btn sec" onclick="verDemo(\''+d.subdominio+'\')">Ver ↗</button>'
       + '<button class="btn wa" onclick="compartirDemo(\''+d.subdominio+'\')">WhatsApp</button>'
-      + '</div></div></div>';
+      + '</div>'
+      + '<button class="btn" style="width:100%;margin-top:8px" onclick="abrirCatalogo(\''+d.id+'\')">Editar productos e imágenes</button>'
+      + '</div></div>';
   });
   cont.innerHTML = html;
 }
@@ -694,6 +696,7 @@ async function abrirCatalogo(id){
   if (!e) return;
   CLIENTE_ACTUAL = e;
   document.getElementById('vista-clientes').style.display = 'none';
+  document.getElementById('vista-demos').style.display = 'none';
   document.getElementById('vista-catalogo').style.display = 'block';
   document.getElementById('cli-dot').style.background = e.color_primario || '#888';
   document.getElementById('cli-nombre').textContent = e.nombre;
@@ -702,10 +705,11 @@ async function abrirCatalogo(id){
 }
 
 function volverAClientes(){
+  const eraDemo = CLIENTE_ACTUAL && esDemo(CLIENTE_ACTUAL);
   document.getElementById('vista-catalogo').style.display = 'none';
-  document.getElementById('vista-clientes').style.display = 'block';
   CLIENTE_ACTUAL = null;
   cargar();
+  if (eraDemo) irDemos(); else irNegocios();
 }
 
 async function cargarCatalogo(){
