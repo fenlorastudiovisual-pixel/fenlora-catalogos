@@ -263,6 +263,36 @@
         </select>
       </div>
     </div>
+    <label>Estilo / tema</label>
+    <select id="f-tema">
+      <option value="">Personalizado (colores de abajo)</option>
+      <optgroup label="Ropa / moda">
+        <option value="urbano">Urbano</option>
+        <option value="minimal">Minimal</option>
+        <option value="boutique">Boutique</option>
+        <option value="juvenil">Juvenil</option>
+      </optgroup>
+      <optgroup label="Ferretería">
+        <option value="industrial">Industrial</option>
+        <option value="robusto">Robusto</option>
+        <option value="tierra">Tierra</option>
+      </optgroup>
+      <optgroup label="Barbería / salón">
+        <option value="clasico">Clásico</option>
+        <option value="vintage">Vintage</option>
+        <option value="navy">Navy</option>
+      </optgroup>
+      <optgroup label="Gimnasio">
+        <option value="energia">Energía</option>
+        <option value="power">Power</option>
+        <option value="electrico">Eléctrico</option>
+      </optgroup>
+      <optgroup label="Belleza / spa">
+        <option value="spa">Spa</option>
+        <option value="glam">Glam (oscuro)</option>
+        <option value="rosa">Rosa</option>
+      </optgroup>
+    </select>
     <div class="fila">
       <div>
         <label>Color primario</label>
@@ -551,6 +581,7 @@ function abrirModalNuevo(){
   document.getElementById('f-nicho').value = 'distribuidora';
   document.getElementById('f-color1').value = '#185FA5';
   document.getElementById('f-color2').value = '#B8860B';
+  document.getElementById('f-tema').value = '';
   document.getElementById('f-wa').value = '';
   document.getElementById('f-tipo').value = 'producto';
   document.getElementById('f-boton').value = '';
@@ -574,6 +605,7 @@ function editarCliente(id){
   document.getElementById('f-nicho').value = e.tipo_nicho || 'distribuidora';
   document.getElementById('f-color1').value = e.color_primario || '#185FA5';
   document.getElementById('f-color2').value = e.color_secundario || '#B8860B';
+  document.getElementById('f-tema').value = e.tema || '';
   document.getElementById('f-wa').value = e.whatsapp || '';
   document.getElementById('f-tipo').value = e.tipo_negocio || 'producto';
   document.getElementById('f-boton').value = e.texto_boton || '';
@@ -611,6 +643,7 @@ async function guardarCliente(){
     tipo_nicho: document.getElementById('f-nicho').value,
     color_primario: document.getElementById('f-color1').value,
     color_secundario: document.getElementById('f-color2').value,
+    tema: document.getElementById('f-tema').value || null,
     whatsapp: document.getElementById('f-wa').value.trim(),
     tipo_negocio: document.getElementById('f-tipo').value,
     texto_boton: document.getElementById('f-boton').value.trim() || 'Cotizar por WhatsApp',

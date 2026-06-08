@@ -51,6 +51,15 @@
   .demo-bar button{border:none;background:#fff;color:var(--primario);font-weight:700;font-size:13.5px;font-family:inherit;padding:0 18px;border-radius:10px;cursor:pointer;white-space:nowrap}
   .demo-bar .ok{font-size:12.5px;margin-top:8px;opacity:.95;display:none}
 
+  /* SELECTOR DE TEMAS (demos) */
+  .tema-bar{display:none;background:var(--card);border-bottom:1px solid var(--linea);padding:12px 16px;text-align:center}
+  .tema-bar .tt{font-size:12px;font-weight:600;color:var(--suave);margin-bottom:9px;letter-spacing:.02em}
+  .tchips{display:flex;gap:8px;overflow-x:auto;justify-content:center;flex-wrap:wrap;scrollbar-width:none}
+  .tchips::-webkit-scrollbar{display:none}
+  .tchip{display:flex;align-items:center;gap:7px;border:1px solid var(--linea);background:var(--bg);color:var(--texto);font-size:12.5px;font-weight:600;font-family:inherit;padding:7px 13px;border-radius:999px;cursor:pointer;white-space:nowrap;transition:all .15s}
+  .tchip.on{border-color:var(--primario);box-shadow:0 0 0 2px color-mix(in srgb,var(--primario) 25%,transparent)}
+  .tsw{width:16px;height:16px;border-radius:50%;flex:0 0 auto;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+
   /* BARRA STICKY */
   .barra{position:sticky;top:0;z-index:30;background:rgba(251,249,245,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--linea)}
   .cats{display:flex;gap:8px;padding:13px 16px;overflow-x:auto;scrollbar-width:none}
@@ -172,6 +181,11 @@
   <div class="ok" id="demo-ok">✓ Listo. Ahora toca el botón de WhatsApp y el mensaje te llegará a ti.</div>
 </div>
 
+<div class="tema-bar" id="tema-bar">
+  <div class="tt">Prueba un estilo para tu negocio:</div>
+  <div class="tchips" id="tchips"></div>
+</div>
+
 <div class="barra">
   <div class="cats" id="cats"></div>
   <div id="barra-busqueda">
@@ -246,6 +260,56 @@ function detectarSubdominio(){
 let EMPRESA=null, PRODUCTOS=[], CATEGORIAS=[], categoriaActiva='todas', WA_PRUEBA='';
 let CARRITO=[], FAVORITOS=[];
 
+/* ─── TEMAS (paletas preestablecidas) ─── */
+const TEMAS={
+  urbano:{p:'#1F2937',s:'#D97706',bg:'#FBF9F5',card:'#FFFFFF',tx:'#1F1B17',sv:'#8A8377',ln:'#ECE5D9'},
+  minimal:{p:'#171717',s:'#737373',bg:'#FFFFFF',card:'#FAFAFA',tx:'#1A1A1A',sv:'#888888',ln:'#ECECEC'},
+  boutique:{p:'#6D2E46',s:'#C9A86A',bg:'#FBF1EE',card:'#FFFFFF',tx:'#4A2230',sv:'#9C7C75',ln:'#F0DDD6'},
+  juvenil:{p:'#0EA5E9',s:'#F472B6',bg:'#F8FAFC',card:'#FFFFFF',tx:'#0F2231',sv:'#7C8A96',ln:'#E2EAF0'},
+  industrial:{p:'#374151',s:'#EA580C',bg:'#F3F4F6',card:'#FFFFFF',tx:'#1F2937',sv:'#6B7280',ln:'#E2E5EA'},
+  robusto:{p:'#1E3A8A',s:'#F59E0B',bg:'#FFFFFF',card:'#FAFAFA',tx:'#1E293B',sv:'#64748B',ln:'#E5E9F0'},
+  tierra:{p:'#78350F',s:'#57534E',bg:'#FAFAF9',card:'#FFFFFF',tx:'#3B2A1A',sv:'#8A7E72',ln:'#EAE4DD'},
+  clasico:{p:'#111827',s:'#A16207',bg:'#FBF9F5',card:'#FFFFFF',tx:'#1F1B17',sv:'#8A8377',ln:'#ECE5D9'},
+  vintage:{p:'#5E4742',s:'#B08968',bg:'#F4EFE5',card:'#FBF8F1',tx:'#3D2E29',sv:'#8A7A72',ln:'#E5DBCB'},
+  navy:{p:'#1E293B',s:'#0E7490',bg:'#F8FAFC',card:'#FFFFFF',tx:'#0F1B2D',sv:'#64748B',ln:'#E2E8F0'},
+  energia:{p:'#15803D',s:'#111827',bg:'#FFFFFF',card:'#FAFAFA',tx:'#14241A',sv:'#6B7280',ln:'#E5EAE6'},
+  power:{p:'#DC2626',s:'#18181B',bg:'#FAFAFA',card:'#FFFFFF',tx:'#1A1A1A',sv:'#737373',ln:'#E8E8E8'},
+  electrico:{p:'#2563EB',s:'#84CC16',bg:'#F8FAFC',card:'#FFFFFF',tx:'#0F1F3D',sv:'#64748B',ln:'#E2E8F0'},
+  spa:{p:'#6B8E7B',s:'#C8B6A6',bg:'#F4EFE8',card:'#FBF8F3',tx:'#2D3A33',sv:'#7C8079',ln:'#E2E0D5'},
+  glam:{p:'#C9A86A',s:'#DCC089',bg:'#0E0B0D',card:'#171114',tx:'#F2E9DC',sv:'#BCAE98',ln:'rgba(201,168,106,.25)'},
+  rosa:{p:'#C98B86',s:'#E8C4C0',bg:'#FBF1EE',card:'#FFFFFF',tx:'#5E4742',sv:'#9C7C75',ln:'#F0DDD6'}
+};
+const NOMBRE_TEMA={urbano:'Urbano',minimal:'Minimal',boutique:'Boutique',juvenil:'Juvenil',industrial:'Industrial',robusto:'Robusto',tierra:'Tierra',clasico:'Clásico',vintage:'Vintage',navy:'Navy',energia:'Energía',power:'Power',electrico:'Eléctrico',spa:'Spa',glam:'Glam',rosa:'Rosa'};
+const TEMAS_POR_NICHO={
+  ropa:['urbano','minimal','boutique','juvenil'],
+  ferreteria:['industrial','robusto','tierra'],
+  salon:['clasico','vintage','navy'],
+  spa:['spa','glam','rosa'],
+  gimnasio:['energia','power','electrico'],
+  belleza_dist:['spa','glam','rosa'],
+  cosmeticos:['spa','glam','rosa']
+};
+function aplicarTema(t){
+  const tema=TEMAS[t]; if(!tema)return;
+  const r=document.documentElement.style;
+  r.setProperty('--primario',tema.p); r.setProperty('--secundario',tema.s);
+  r.setProperty('--bg',tema.bg); r.setProperty('--card',tema.card);
+  r.setProperty('--texto',tema.tx); r.setProperty('--suave',tema.sv);
+  r.setProperty('--linea',tema.ln);
+  document.querySelectorAll('.tchip').forEach(function(c){c.classList.toggle('on',c.dataset.tema===t);});
+  if(EMPRESA)pintarFab();
+}
+function pintarSelectorTemas(emp){
+  const lista=TEMAS_POR_NICHO[emp.tipo_nicho]||['urbano','minimal','boutique','spa'];
+  let html='';
+  lista.forEach(function(t){
+    const tm=TEMAS[t];
+    html+='<button class="tchip" data-tema="'+t+'" onclick="aplicarTema(\''+t+'\')"><span class="tsw" style="background:linear-gradient(135deg,'+tm.p+','+tm.s+')"></span>'+NOMBRE_TEMA[t]+'</button>';
+  });
+  document.getElementById('tchips').innerHTML=html;
+  document.getElementById('tema-bar').style.display='block';
+}
+
 function iniciales(n){const p=(n||'').trim().split(/\s+/).filter(Boolean);if(!p.length)return '·';if(p.length===1)return p[0].slice(0,2).toUpperCase();return (p[0][0]+p[1][0]).toUpperCase();}
 function tagNicho(emp){
   if(emp.tipo_negocio==='servicio')return 'Servicios';
@@ -283,8 +347,12 @@ function cerrarSplash(){setTimeout(function(){document.getElementById('splash').
 
 function aplicarIdentidad(emp){
   const r=document.documentElement.style;
-  if(emp.color_primario)r.setProperty('--primario',emp.color_primario);
-  if(emp.color_secundario)r.setProperty('--secundario',emp.color_secundario);
+  if(emp.tema && TEMAS[emp.tema]){
+    aplicarTema(emp.tema);
+  } else {
+    if(emp.color_primario)r.setProperty('--primario',emp.color_primario);
+    if(emp.color_secundario)r.setProperty('--secundario',emp.color_secundario);
+  }
   const tag=tagNicho(emp);
   document.getElementById('nom-empresa').textContent=emp.nombre;
   document.title=emp.nombre;
@@ -304,7 +372,10 @@ function aplicarIdentidad(emp){
   }
   if(emp.mostrar_busqueda!==false)document.getElementById('barra-busqueda').style.display='block';
   pintarFab();
-  if((emp.subdominio||'').indexOf('demo-')===0)document.getElementById('demo-bar').style.display='block';
+  if((emp.subdominio||'').indexOf('demo-')===0){
+    document.getElementById('demo-bar').style.display='block';
+    pintarSelectorTemas(emp);
+  }
 }
 
 function numeroActivo(){if(WA_PRUEBA)return WA_PRUEBA;return (EMPRESA&&EMPRESA.whatsapp?EMPRESA.whatsapp:'').replace(/\D/g,'');}
