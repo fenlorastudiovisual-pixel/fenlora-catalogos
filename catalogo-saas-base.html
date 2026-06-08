@@ -563,10 +563,10 @@ function aplicarIdentidad(emp){
     const img=document.createElement('img');
     img.className='hero-logo'; img.src=emp.logo_url; img.alt=emp.nombre;
     cab.insertBefore(img,cab.firstChild);
-    // Logo protagonista: el nombre en texto y la línea se ocultan (el logo ya identifica al negocio)
+    // Logo protagonista: solo el logo. Sin nombre, sin etiqueta, sin línea.
     document.getElementById('nom-empresa').style.display='none';
     const deco=cab.querySelector('.deco'); if(deco)deco.style.display='none';
-    pill.style.display='inline-block';
+    pill.style.display='none';
   } else {
     document.getElementById('sp-mark').textContent=iniciales(emp.nombre);
     pill.style.display='inline-block';
