@@ -196,12 +196,32 @@
       <div>
         <label>Nicho</label>
         <select id="f-nicho">
-          <option value="distribuidora">Distribuidora</option>
-          <option value="ferreteria">Ferretería</option>
-          <option value="ropa">Ropa / Calzado</option>
-          <option value="restaurante">Restaurante</option>
-          <option value="salon">Salón / Belleza</option>
-          <option value="otro">Otro</option>
+          <optgroup label="Producto con precio">
+            <option value="ferreteria">Ferretería</option>
+            <option value="ropa">Ropa / Calzado</option>
+            <option value="papeleria">Papelería</option>
+            <option value="joyeria">Joyería / Accesorios</option>
+            <option value="muebles">Muebles / Hogar</option>
+            <option value="tecnologia">Tecnología / Celulares</option>
+            <option value="repuestos">Repuestos</option>
+            <option value="producto_otro">Otro (producto)</option>
+          </optgroup>
+          <optgroup label="Distribuidora / Mayorista">
+            <option value="distribuidora">Distribuidora</option>
+            <option value="mayorista">Mayorista / Importadora</option>
+          </optgroup>
+          <optgroup label="Servicios">
+            <option value="salon">Salón / Barbería</option>
+            <option value="spa">Spa / Estética</option>
+            <option value="taller">Taller / Mecánica</option>
+            <option value="gimnasio">Gimnasio</option>
+            <option value="inmobiliaria">Inmobiliaria</option>
+            <option value="servicio_otro">Otro (servicio)</option>
+          </optgroup>
+          <optgroup label="Belleza especializado">
+            <option value="belleza_dist">Distribuidora de belleza</option>
+            <option value="cosmeticos">Cosméticos / Esmaltes</option>
+          </optgroup>
         </select>
       </div>
     </div>
