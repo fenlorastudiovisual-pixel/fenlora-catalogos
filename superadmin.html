@@ -85,6 +85,21 @@
   .login-box input{width:100%;padding:11px;border:1px solid var(--linea);border-radius:9px;font-size:14px;font-family:inherit}
   .login-box .btn{width:100%;margin-top:18px;padding:12px}
   .login-error{color:var(--rojo);font-size:13px;margin-top:10px;min-height:18px}
+  /* Pestañas Negocios / Demos */
+  .tabs{display:flex;gap:8px;margin-bottom:16px}
+  .tab{border:1px solid var(--linea);background:var(--card);color:var(--suave);font-size:14px;font-weight:600;padding:9px 20px;border-radius:10px;cursor:pointer;transition:all .15s}
+  .tab:hover{border-color:var(--azul);color:var(--azul)}
+  .tab.on{background:var(--azul);color:#fff;border-color:var(--azul)}
+  /* Tarjetas de demos */
+  .demos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+  .demo-card{background:var(--card);border:1px solid var(--linea);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+  .demo-top{height:64px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;font-weight:700}
+  .demo-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:3px}
+  .demo-body .n{font-size:15px;font-weight:600}
+  .demo-body .s{font-size:12px;color:var(--suave)}
+  .demo-acts{display:flex;gap:8px;margin-top:12px}
+  .demo-acts .btn{flex:1;text-align:center;padding:9px;font-size:12.5px}
+  .btn.wa{background:#25D366;color:#fff}
 </style>
 </head>
 <body>
@@ -118,6 +133,12 @@
 
 <div class="wrap">
 
+  <!-- ════════ PESTAÑAS ════════ -->
+  <div class="tabs">
+    <button class="tab on" id="tab-neg" onclick="irNegocios()">Negocios</button>
+    <button class="tab" id="tab-demos" onclick="irDemos()">Demos</button>
+  </div>
+
   <!-- ════════ VISTA 1: LISTA DE CLIENTES ════════ -->
   <div id="vista-clientes">
     <div class="stats" id="stats">
@@ -134,6 +155,23 @@
       </div>
       <div id="lista">
         <div class="estado"><div class="spin"></div>Cargando clientes…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ VISTA DEMOS ════════ -->
+  <div id="vista-demos" style="display:none">
+    <div class="panel">
+      <div class="ph">
+        <div class="t">Demos por nicho</div>
+      </div>
+      <div style="padding:14px 18px;font-size:13px;color:var(--suave);border-bottom:1px solid var(--linea)">
+        Catálogos de muestra para enseñar a prospectos. Ábrelos para presentarlos, o compártelos por WhatsApp con tus vendedores externos.
+      </div>
+      <div style="padding:16px 18px">
+        <div class="demos-grid" id="demos-grid">
+          <div class="estado"><div class="spin"></div>Cargando demos…</div>
+        </div>
       </div>
     </div>
   </div>
@@ -196,12 +234,32 @@
       <div>
         <label>Nicho</label>
         <select id="f-nicho">
-          <option value="distribuidora">Distribuidora</option>
-          <option value="ferreteria">Ferretería</option>
-          <option value="ropa">Ropa / Calzado</option>
-          <option value="restaurante">Restaurante</option>
-          <option value="salon">Salón / Belleza</option>
-          <option value="otro">Otro</option>
+          <optgroup label="Producto con precio">
+            <option value="ferreteria">Ferretería</option>
+            <option value="ropa">Ropa / Calzado</option>
+            <option value="papeleria">Papelería</option>
+            <option value="joyeria">Joyería / Accesorios</option>
+            <option value="muebles">Muebles / Hogar</option>
+            <option value="tecnologia">Tecnología / Celulares</option>
+            <option value="repuestos">Repuestos</option>
+            <option value="producto_otro">Otro (producto)</option>
+          </optgroup>
+          <optgroup label="Distribuidora / Mayorista">
+            <option value="distribuidora">Distribuidora</option>
+            <option value="mayorista">Mayorista / Importadora</option>
+          </optgroup>
+          <optgroup label="Servicios">
+            <option value="salon">Salón / Barbería</option>
+            <option value="spa">Spa / Estética</option>
+            <option value="taller">Taller / Mecánica</option>
+            <option value="gimnasio">Gimnasio</option>
+            <option value="inmobiliaria">Inmobiliaria</option>
+            <option value="servicio_otro">Otro (servicio)</option>
+          </optgroup>
+          <optgroup label="Belleza especializado">
+            <option value="belleza_dist">Distribuidora de belleza</option>
+            <option value="cosmeticos">Cosméticos / Esmaltes</option>
+          </optgroup>
         </select>
       </div>
     </div>
@@ -243,6 +301,24 @@
         <input id="f-plan" type="number" placeholder="50000">
       </div>
     </div>
+    <div class="fila">
+      <div>
+        <label>Barra de búsqueda</label>
+        <select id="f-busqueda">
+          <option value="true">Sí</option>
+          <option value="false">No</option>
+        </select>
+      </div>
+      <div>
+        <label>Mostrar logo</label>
+        <select id="f-logo">
+          <option value="true">Sí</option>
+          <option value="false">No</option>
+        </select>
+      </div>
+    </div>
+    <label>URL del logo (opcional)</label>
+    <input id="f-logourl" placeholder="https://...">
     <div class="botones">
       <button class="btn sec" style="flex:1" onclick="cerrarModal()">Cancelar</button>
       <button class="btn" style="flex:1" id="btn-guardar" onclick="guardarCliente()">Crear cliente</button>
@@ -303,6 +379,63 @@ async function cargar(){
   EMPRESAS = data || [];
   pintarStats();
   pintarLista();
+  pintarDemos();
+}
+
+// Un negocio es "demo" si su subdominio empieza con "demo-"
+function esDemo(e){ return (e.subdominio||'').indexOf('demo-') === 0; }
+
+// ── Navegación entre pestañas ──
+function irNegocios(){
+  document.getElementById('tab-neg').classList.add('on');
+  document.getElementById('tab-demos').classList.remove('on');
+  document.getElementById('vista-clientes').style.display = 'block';
+  document.getElementById('vista-demos').style.display = 'none';
+  document.getElementById('vista-catalogo').style.display = 'none';
+}
+function irDemos(){
+  document.getElementById('tab-demos').classList.add('on');
+  document.getElementById('tab-neg').classList.remove('on');
+  document.getElementById('vista-clientes').style.display = 'none';
+  document.getElementById('vista-demos').style.display = 'block';
+  document.getElementById('vista-catalogo').style.display = 'none';
+}
+
+// ── Demos ──
+function urlDemo(sub){
+  return location.origin + location.pathname.replace(/[^/]*$/, 'catalogo-saas-base.html') + '?empresa=' + sub;
+}
+function verDemo(sub){ window.open(urlDemo(sub), '_blank'); }
+function compartirDemo(sub){
+  const d = EMPRESAS.find(function(e){ return e.subdominio === sub; });
+  const nombre = d ? d.nombre : 'catálogo';
+  const url = urlDemo(sub);
+  const msg = encodeURIComponent('Mira este catálogo digital de muestra ('+nombre+'):\n'+url);
+  window.open('https://wa.me/?text='+msg, '_blank');
+}
+function pintarDemos(){
+  const cont = document.getElementById('demos-grid');
+  const demos = EMPRESAS.filter(esDemo);
+  if (!demos.length){
+    cont.innerHTML = '<div class="estado">No hay demos todavía. Córrelos con el SQL de demos en Supabase.</div>';
+    return;
+  }
+  let html = '';
+  demos.forEach(function(d){
+    const c1 = d.color_primario || '#185FA5';
+    const c2 = d.color_secundario || c1;
+    const ini = (d.nombre||'?').trim().slice(0,2).toUpperCase();
+    html += '<div class="demo-card">'
+      + '<div class="demo-top" style="background:linear-gradient(135deg,'+c1+','+c2+')">'+ini+'</div>'
+      + '<div class="demo-body">'
+      + '<div class="n">'+d.nombre+'</div>'
+      + '<div class="s">'+(d.tipo_nicho||'')+'</div>'
+      + '<div class="demo-acts">'
+      + '<button class="btn sec" onclick="verDemo(\''+d.subdominio+'\')">Ver ↗</button>'
+      + '<button class="btn wa" onclick="compartirDemo(\''+d.subdominio+'\')">WhatsApp</button>'
+      + '</div></div></div>';
+  });
+  cont.innerHTML = html;
 }
 
 function diasPara(fecha){
@@ -324,13 +457,14 @@ function estadoVisual(emp){
 }
 
 function pintarStats(){
-  const activos = EMPRESAS.filter(e=>e.activo !== false && e.estado_pago !== 'suspendido').length;
-  const porCobrar = EMPRESAS.filter(e=>{
+  const EM = EMPRESAS.filter(function(e){ return !esDemo(e); });
+  const activos = EM.filter(e=>e.activo !== false && e.estado_pago !== 'suspendido').length;
+  const porCobrar = EM.filter(e=>{
     const d = diasPara(e.fecha_vence);
     return e.activo !== false && e.estado_pago !== 'suspendido' && d !== null && d <= 5;
   }).length;
-  const suspendidos = EMPRESAS.filter(e=>e.estado_pago === 'suspendido' || e.activo === false).length;
-  const ingreso = EMPRESAS
+  const suspendidos = EM.filter(e=>e.estado_pago === 'suspendido' || e.activo === false).length;
+  const ingreso = EM
     .filter(e=>e.activo !== false && e.estado_pago !== 'suspendido')
     .reduce((s,e)=>s + (Number(e.plan_valor)||0), 0);
   const fmt = (n)=> '$'+Number(n).toLocaleString('es-CO');
@@ -343,12 +477,13 @@ function pintarStats(){
 
 function pintarLista(){
   const cont = document.getElementById('lista');
-  if (!EMPRESAS.length){
+  const NEG = EMPRESAS.filter(function(e){ return !esDemo(e); });
+  if (!NEG.length){
     cont.innerHTML = '<div class="estado">Aún no tienes clientes. Crea el primero con “+ Nuevo cliente”.</div>';
     return;
   }
   let html = '';
-  EMPRESAS.forEach(e=>{
+  NEG.forEach(e=>{
     const ev = estadoVisual(e);
     const color = e.color_primario || '#888';
     const suspendido = (e.estado_pago === 'suspendido' || e.activo === false);
@@ -421,6 +556,9 @@ function abrirModalNuevo(){
   document.getElementById('f-boton').value = '';
   document.getElementById('f-precio').value = 'true';
   document.getElementById('f-plan').value = '';
+  document.getElementById('f-busqueda').value = 'true';
+  document.getElementById('f-logo').value = 'true';
+  document.getElementById('f-logourl').value = '';
   document.getElementById('overlay').classList.add('on');
 }
 
@@ -441,6 +579,9 @@ function editarCliente(id){
   document.getElementById('f-boton').value = e.texto_boton || '';
   document.getElementById('f-precio').value = e.muestra_precio ? 'true' : 'false';
   document.getElementById('f-plan').value = e.plan_valor || '';
+  document.getElementById('f-busqueda').value = (e.mostrar_busqueda !== false) ? 'true' : 'false';
+  document.getElementById('f-logo').value = (e.mostrar_logo !== false) ? 'true' : 'false';
+  document.getElementById('f-logourl').value = e.logo_url || '';
   document.getElementById('overlay').classList.add('on');
 }
 
@@ -474,6 +615,9 @@ async function guardarCliente(){
     tipo_negocio: document.getElementById('f-tipo').value,
     texto_boton: document.getElementById('f-boton').value.trim() || 'Cotizar por WhatsApp',
     muestra_precio: document.getElementById('f-precio').value === 'true',
+    mostrar_busqueda: document.getElementById('f-busqueda').value === 'true',
+    mostrar_logo: document.getElementById('f-logo').value === 'true',
+    logo_url: document.getElementById('f-logourl').value.trim() || null,
     plan_valor: plan
   };
 
