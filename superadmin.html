@@ -223,6 +223,15 @@
       </div>
       <div id="lista-promos"><div class="estado">—</div></div>
     </div>
+
+    <!-- Colecciones (solo nichos compatibles) -->
+    <div class="panel" id="panel-colecciones" style="margin-top:14px;display:none">
+      <div class="ph">
+        <div class="t">Colecciones</div>
+        <button class="btn" style="margin-left:auto" onclick="abrirModalColeccion()">+ Colección</button>
+      </div>
+      <div id="lista-colecciones"><div class="estado">—</div></div>
+    </div>
   </div>
 
 </div>
@@ -398,6 +407,10 @@
         <select id="p-marca"></select>
       </div>
     </div>
+    <div id="campo-coleccion" style="display:none">
+      <label>Colección</label>
+      <select id="p-coleccion"></select>
+    </div>
     <label>Imagen principal (pega la URL de la foto)</label>
     <input id="p-img" placeholder="https://...">
     <label>Imágenes adicionales (una URL por línea) — opcional</label>
@@ -433,6 +446,22 @@
     <div class="botones">
       <button class="btn sec" style="flex:1" onclick="cerrarModalPromo()">Cancelar</button>
       <button class="btn" style="flex:1" id="btn-guardar-promo" onclick="guardarPromo()">Crear promoción</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-col">
+  <div class="modal">
+    <h3 id="col-titulo">Nueva colección</h3>
+    <label>Nombre</label>
+    <input id="co-nombre" placeholder="Ej: Colección Verano 2026">
+    <label>Imagen de portada (URL)</label>
+    <input id="co-portada" placeholder="https://...">
+    <label>Orden</label>
+    <input id="co-orden" type="number" placeholder="0" value="0">
+    <div class="botones">
+      <button class="btn sec" style="flex:1" onclick="cerrarModalColeccion()">Cancelar</button>
+      <button class="btn" style="flex:1" id="btn-guardar-col" onclick="guardarColeccion()">Crear colección</button>
     </div>
   </div>
 </div>
@@ -738,8 +767,11 @@ let CATS = [];
 let MARCAS = [];
 let PRODS = [];
 let PROMOS = [];
+let COLS = [];
 let EDITANDO_PROD = null;
 let EDITANDO_PROMO = null;
+let EDITANDO_COL = null;
+const NICHOS_COLECCION = ['ropa','cosmeticos','belleza_dist','joyeria','muebles'];
 
 async function abrirCatalogo(id){
   const e = EMPRESAS.find(x=>x.id===id);
@@ -764,20 +796,23 @@ function volverAClientes(){
 
 async function cargarCatalogo(){
   const eid = CLIENTE_ACTUAL.id;
-  const [rc, rm, rp, rpr] = await Promise.all([
+  const [rc, rm, rp, rpr, rco] = await Promise.all([
     sb.from('categorias').select('*').eq('empresa_id', eid).order('orden'),
     sb.from('marcas').select('*').eq('empresa_id', eid).order('orden'),
     sb.from('productos').select('*').eq('empresa_id', eid).order('orden'),
-    sb.from('promociones').select('*').eq('empresa_id', eid).order('orden')
+    sb.from('promociones').select('*').eq('empresa_id', eid).order('orden'),
+    sb.from('colecciones').select('*').eq('empresa_id', eid).order('orden')
   ]);
   CATS = rc.data || [];
   MARCAS = rm.data || [];
   PRODS = rp.data || [];
   PROMOS = rpr.data || [];
+  COLS = rco.data || [];
   pintarCats();
   pintarMarcas();
   pintarProductos();
   pintarPromos();
+  pintarColecciones();
 }
 
 // ── CATEGORÍAS ──
@@ -867,6 +902,12 @@ function llenarSelectsProducto(){
     CATS.map(c=>'<option value="'+c.id+'">'+c.nombre+'</option>').join('');
   selMarca.innerHTML = '<option value="">— Sin marca —</option>' +
     MARCAS.map(m=>'<option value="'+m.id+'">'+m.nombre+'</option>').join('');
+  const permite = NICHOS_COLECCION.indexOf(CLIENTE_ACTUAL.tipo_nicho) >= 0 && COLS.length;
+  document.getElementById('campo-coleccion').style.display = permite ? 'block' : 'none';
+  if (permite){
+    document.getElementById('p-coleccion').innerHTML = '<option value="">— Sin colección —</option>' +
+      COLS.map(co=>'<option value="'+co.id+'">'+co.nombre+'</option>').join('');
+  }
 }
 
 function abrirModalProducto(){
@@ -895,6 +936,7 @@ function editarProducto(id){
   document.getElementById('p-marca').value = p.marca_id || '';
   document.getElementById('p-img').value = p.imagen_principal || '';
   document.getElementById('p-galeria').value = p.galeria || '';
+  if (document.getElementById('p-coleccion')) document.getElementById('p-coleccion').value = p.coleccion_id || '';
   document.getElementById('overlay-prod').classList.add('on');
 }
 function cerrarModalProducto(){ document.getElementById('overlay-prod').classList.remove('on'); }
@@ -914,7 +956,8 @@ async function guardarProducto(){
     categoria_id: document.getElementById('p-cat').value || null,
     marca_id: document.getElementById('p-marca').value || null,
     imagen_principal: document.getElementById('p-img').value.trim() || null,
-    galeria: document.getElementById('p-galeria').value.trim() || null
+    galeria: document.getElementById('p-galeria').value.trim() || null,
+    coleccion_id: document.getElementById('p-coleccion').value || null
   };
 
   let error;
@@ -1007,6 +1050,76 @@ async function borrarPromo(id){
   const pr = PROMOS.find(function(x){return x.id===id;});
   if (!confirm('¿Borrar la promoción "'+(pr?pr.titulo:'')+'"?')) return;
   const { error } = await sb.from('promociones').delete().eq('id', id);
+  if (error){ alert('Error: '+error.message); return; }
+  cargarCatalogo();
+}
+
+// ── COLECCIONES ──
+function pintarColecciones(){
+  const permite = NICHOS_COLECCION.indexOf(CLIENTE_ACTUAL.tipo_nicho) >= 0;
+  document.getElementById('panel-colecciones').style.display = permite ? 'block' : 'none';
+  if (!permite) return;
+  const c = document.getElementById('lista-colecciones');
+  if (!COLS.length){ c.innerHTML = '<div class="estado">Sin colecciones. Crea una con “+ Colección”.</div>'; return; }
+  c.innerHTML = COLS.map(function(co){
+    const img = co.portada ? '<img class="miniimg" src="'+co.portada+'">' : '<div class="miniimg ph">▦</div>';
+    const cuantos = PRODS.filter(function(p){return p.coleccion_id===co.id;}).length;
+    return '<div class="item">'+img
+      + '<div><div class="nom">'+co.nombre+'</div>'
+      + '<div class="cli-sub">'+cuantos+' producto(s)</div></div>'
+      + '<div class="acts">'
+      + '<span title="Editar" onclick="editarColeccion(\''+co.id+'\')">✏️</span>'
+      + '<span title="Borrar" onclick="borrarColeccion(\''+co.id+'\')">🗑️</span>'
+      + '</div></div>';
+  }).join('');
+}
+function abrirModalColeccion(){
+  EDITANDO_COL = null;
+  document.getElementById('col-titulo').textContent = 'Nueva colección';
+  document.getElementById('btn-guardar-col').textContent = 'Crear colección';
+  document.getElementById('co-nombre').value = '';
+  document.getElementById('co-portada').value = '';
+  document.getElementById('co-orden').value = COLS.length;
+  document.getElementById('overlay-col').classList.add('on');
+}
+function editarColeccion(id){
+  const co = COLS.find(function(x){return x.id===id;});
+  if (!co) return;
+  EDITANDO_COL = id;
+  document.getElementById('col-titulo').textContent = 'Editar colección';
+  document.getElementById('btn-guardar-col').textContent = 'Guardar cambios';
+  document.getElementById('co-nombre').value = co.nombre || '';
+  document.getElementById('co-portada').value = co.portada || '';
+  document.getElementById('co-orden').value = co.orden || 0;
+  document.getElementById('overlay-col').classList.add('on');
+}
+function cerrarModalColeccion(){ document.getElementById('overlay-col').classList.remove('on'); }
+async function guardarColeccion(){
+  const nombre = document.getElementById('co-nombre').value.trim();
+  if (!nombre){ alert('El nombre es obligatorio.'); return; }
+  const btn = document.getElementById('btn-guardar-col');
+  const txt = btn.textContent; btn.textContent='Guardando…'; btn.disabled=true;
+  const datos = {
+    nombre: nombre,
+    portada: document.getElementById('co-portada').value.trim() || null,
+    orden: Number(document.getElementById('co-orden').value)||0
+  };
+  let error;
+  if (EDITANDO_COL){
+    ({ error } = await sb.from('colecciones').update(datos).eq('id', EDITANDO_COL));
+  } else {
+    datos.empresa_id = CLIENTE_ACTUAL.id;
+    ({ error } = await sb.from('colecciones').insert(datos));
+  }
+  btn.textContent = txt; btn.disabled = false;
+  if (error){ alert('Error: '+error.message); return; }
+  cerrarModalColeccion();
+  cargarCatalogo();
+}
+async function borrarColeccion(id){
+  const co = COLS.find(function(x){return x.id===id;});
+  if (!confirm('¿Borrar la colección "'+(co?co.nombre:'')+'"? Los productos no se borran, solo quedan sin colección.')) return;
+  const { error } = await sb.from('colecciones').delete().eq('id', id);
   if (error){ alert('Error: '+error.message); return; }
   cargarCatalogo();
 }
