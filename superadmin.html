@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Panel Fenlora Catálogos</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
   :root{
     --azul:#185FA5; --bg:#F4F6F9; --card:#FFFFFF; --tx:#222; --suave:#777;
@@ -210,7 +211,10 @@
     <div class="panel" style="margin-top:14px">
       <div class="ph">
         <div class="t">Productos</div>
-        <button class="btn" style="margin-left:auto" onclick="abrirModalProducto()">+ Producto</button>
+        <button class="btn sec" style="margin-left:auto" onclick="descargarPlantilla()">⬇ Plantilla Excel</button>
+        <button class="btn sec" onclick="document.getElementById('file-excel').click()">⬆ Importar Excel</button>
+        <button class="btn" onclick="abrirModalProducto()">+ Producto</button>
+        <input type="file" id="file-excel" accept=".xlsx,.xls,.csv" style="display:none" onchange="leerExcel(event)">
       </div>
       <div id="lista-productos"><div class="estado">—</div></div>
     </div>
@@ -385,6 +389,8 @@
     <h3 id="prod-titulo">Nuevo producto</h3>
     <label>Nombre del producto</label>
     <input id="p-nombre" placeholder="Ej: Esmalte Rojo Pasión">
+    <label>SKU / código interno — opcional</label>
+    <input id="p-sku" placeholder="Ej: ESM-ROJ-01">
     <label>Descripción</label>
     <input id="p-desc" placeholder="Breve descripción">
     <div class="fila">
@@ -462,6 +468,19 @@
     <div class="botones">
       <button class="btn sec" style="flex:1" onclick="cerrarModalColeccion()">Cancelar</button>
       <button class="btn" style="flex:1" id="btn-guardar-col" onclick="guardarColeccion()">Crear colección</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-import">
+  <div class="modal" style="max-width:560px">
+    <h3>Vista previa de importación</h3>
+    <div id="import-resumen" style="font-size:14px;margin-bottom:12px"></div>
+    <div id="import-tabla" style="max-height:300px;overflow:auto;border:1px solid var(--linea);border-radius:8px"></div>
+    <div id="import-aviso" style="font-size:12.5px;color:var(--gris,#888);margin-top:10px"></div>
+    <div class="botones">
+      <button class="btn sec" style="flex:1" onclick="cerrarImport()">Cancelar</button>
+      <button class="btn" style="flex:1" id="btn-confirmar-import" onclick="confirmarImport()">Crear productos</button>
     </div>
   </div>
 </div>
@@ -915,7 +934,7 @@ function abrirModalProducto(){
   document.getElementById('prod-titulo').textContent = 'Nuevo producto';
   document.getElementById('btn-guardar-prod').textContent = 'Crear producto';
   llenarSelectsProducto();
-  ['p-nombre','p-desc','p-precio','p-img','p-galeria'].forEach(id=>document.getElementById(id).value='');
+  ['p-nombre','p-sku','p-desc','p-precio','p-img','p-galeria'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('p-orden').value = PRODS.length;
   document.getElementById('p-cat').value = '';
   document.getElementById('p-marca').value = '';
@@ -929,6 +948,7 @@ function editarProducto(id){
   document.getElementById('btn-guardar-prod').textContent = 'Guardar cambios';
   llenarSelectsProducto();
   document.getElementById('p-nombre').value = p.nombre || '';
+  document.getElementById('p-sku').value = p.sku || '';
   document.getElementById('p-desc').value = p.descripcion || '';
   document.getElementById('p-precio').value = (p.precio!=null?p.precio:'');
   document.getElementById('p-orden').value = p.orden || 0;
@@ -950,6 +970,7 @@ async function guardarProducto(){
   const precioVal = document.getElementById('p-precio').value;
   const datos = {
     nombre: nombre,
+    sku: document.getElementById('p-sku').value.trim() || null,
     descripcion: document.getElementById('p-desc').value.trim(),
     precio: precioVal==='' ? null : Number(precioVal),
     orden: Number(document.getElementById('p-orden').value)||0,
@@ -1122,6 +1143,126 @@ async function borrarColeccion(id){
   const { error } = await sb.from('colecciones').delete().eq('id', id);
   if (error){ alert('Error: '+error.message); return; }
   cargarCatalogo();
+}
+
+// ── IMPORTAR DESDE EXCEL ──
+let IMPORT_FILAS = [];
+function descargarPlantilla(){
+  const ejemplo = [
+    { nombre:'Taladro percutor 750W', sku:'TAL-750', precio:189000, descripcion:'Taladro con maletín y brocas', categoria:'Herramientas eléctricas', marca:'Bosch', imagen:'https://...' },
+    { nombre:'Caja de tornillos x100', sku:'TOR-100', precio:12000, descripcion:'Tornillos para madera', categoria:'Tornillería', marca:'', imagen:'' }
+  ];
+  const ws = XLSX.utils.json_to_sheet(ejemplo, { header:['nombre','sku','precio','descripcion','categoria','marca','imagen'] });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Productos');
+  XLSX.writeFile(wb, 'plantilla_productos.xlsx');
+}
+function normClaves(fila){
+  const o = {};
+  Object.keys(fila).forEach(function(k){ o[String(k).trim().toLowerCase()] = fila[k]; });
+  return o;
+}
+function leerExcel(ev){
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type:'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const filas = XLSX.utils.sheet_to_json(ws, { defval:'' }).map(normClaves);
+      IMPORT_FILAS = filas.filter(function(f){ return (f.nombre||'').toString().trim() !== ''; });
+      mostrarPreviewImport();
+    } catch(err){
+      alert('No se pudo leer el archivo. Asegúrate de que sea un Excel (.xlsx) o CSV válido.\n\n'+err.message);
+    }
+    ev.target.value = '';
+  };
+  reader.readAsArrayBuffer(file);
+}
+function mostrarPreviewImport(){
+  if (!IMPORT_FILAS.length){ alert('El archivo no tiene productos válidos (la columna "nombre" es obligatoria).'); return; }
+  document.getElementById('import-resumen').innerHTML = 'Se crearán <b>'+IMPORT_FILAS.length+' producto(s)</b> en <b>'+CLIENTE_ACTUAL.nombre+'</b>.';
+  const muestra = IMPORT_FILAS.slice(0,8);
+  let html = '<table style="width:100%;border-collapse:collapse;font-size:12.5px">';
+  html += '<tr style="background:#f3f3f3;text-align:left"><th style="padding:6px 8px">Nombre</th><th style="padding:6px 8px">SKU</th><th style="padding:6px 8px">Precio</th><th style="padding:6px 8px">Categoría</th><th style="padding:6px 8px">Marca</th></tr>';
+  muestra.forEach(function(f){
+    html += '<tr style="border-top:1px solid #eee">'
+      + '<td style="padding:6px 8px">'+(f.nombre||'')+'</td>'
+      + '<td style="padding:6px 8px">'+(f.sku||'')+'</td>'
+      + '<td style="padding:6px 8px">'+(f.precio||'')+'</td>'
+      + '<td style="padding:6px 8px">'+(f.categoria||'')+'</td>'
+      + '<td style="padding:6px 8px">'+(f.marca||'')+'</td></tr>';
+  });
+  html += '</table>';
+  document.getElementById('import-tabla').innerHTML = html;
+  document.getElementById('import-aviso').textContent = IMPORT_FILAS.length>8 ? 'Mostrando los primeros 8 de '+IMPORT_FILAS.length+'. Las categorías y marcas nuevas se crearán solas.' : 'Las categorías y marcas nuevas se crearán solas.';
+  document.getElementById('overlay-import').classList.add('on');
+}
+function cerrarImport(){ document.getElementById('overlay-import').classList.remove('on'); IMPORT_FILAS = []; }
+async function confirmarImport(){
+  const btn = document.getElementById('btn-confirmar-import');
+  const txt = btn.textContent; btn.textContent='Creando…'; btn.disabled=true;
+  const eid = CLIENTE_ACTUAL.id;
+  try {
+    // 1) Mapas actuales de categorías y marcas (por nombre en minúsculas)
+    const mapCat = {}; CATS.forEach(function(c){ mapCat[c.nombre.trim().toLowerCase()] = c.id; });
+    const mapMar = {}; MARCAS.forEach(function(m){ mapMar[m.nombre.trim().toLowerCase()] = m.id; });
+
+    // 2) Detectar categorías y marcas nuevas
+    const catsNuevas = [], marsNuevas = [];
+    IMPORT_FILAS.forEach(function(f){
+      const cn = (f.categoria||'').toString().trim();
+      if (cn && !mapCat[cn.toLowerCase()] && catsNuevas.indexOf(cn)<0) catsNuevas.push(cn);
+      const mn = (f.marca||'').toString().trim();
+      if (mn && !mapMar[mn.toLowerCase()] && marsNuevas.indexOf(mn)<0) marsNuevas.push(mn);
+    });
+
+    // 3) Crear las nuevas y sumar al mapa
+    if (catsNuevas.length){
+      const { data, error } = await sb.from('categorias').insert(catsNuevas.map(function(n,i){ return { empresa_id:eid, nombre:n, orden:CATS.length+i }; })).select();
+      if (error) throw error;
+      data.forEach(function(c){ mapCat[c.nombre.trim().toLowerCase()] = c.id; });
+    }
+    if (marsNuevas.length){
+      const { data, error } = await sb.from('marcas').insert(marsNuevas.map(function(n,i){ return { empresa_id:eid, nombre:n, orden:MARCAS.length+i }; })).select();
+      if (error) throw error;
+      data.forEach(function(m){ mapMar[m.nombre.trim().toLowerCase()] = m.id; });
+    }
+
+    // 4) Armar productos
+    const productos = IMPORT_FILAS.map(function(f,i){
+      const precioRaw = (f.precio||'').toString().replace(/[^0-9.]/g,'');
+      const cn = (f.categoria||'').toString().trim().toLowerCase();
+      const mn = (f.marca||'').toString().trim().toLowerCase();
+      return {
+        empresa_id: eid,
+        nombre: (f.nombre||'').toString().trim(),
+        sku: (f.sku||'').toString().trim() || null,
+        precio: precioRaw==='' ? null : Number(precioRaw),
+        descripcion: (f.descripcion||'').toString().trim(),
+        categoria_id: cn ? (mapCat[cn]||null) : null,
+        marca_id: mn ? (mapMar[mn]||null) : null,
+        imagen_principal: (f.imagen||'').toString().trim() || null,
+        orden: PRODS.length + i,
+        activo: true
+      };
+    });
+
+    // 5) Insertar en lotes de 100
+    for (let j=0; j<productos.length; j+=100){
+      const lote = productos.slice(j, j+100);
+      const { error } = await sb.from('productos').insert(lote);
+      if (error) throw error;
+    }
+    btn.textContent = txt; btn.disabled = false;
+    cerrarImport();
+    alert('✓ Se crearon '+productos.length+' productos.');
+    cargarCatalogo();
+  } catch(err){
+    btn.textContent = txt; btn.disabled = false;
+    alert('Error al importar: '+err.message);
+  }
 }
 
 // ══════════════════════════════════════════════════════════
