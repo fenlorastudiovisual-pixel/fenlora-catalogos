@@ -384,8 +384,10 @@
         <select id="p-marca"></select>
       </div>
     </div>
-    <label>Imagen (pega la URL de la foto)</label>
+    <label>Imagen principal (pega la URL de la foto)</label>
     <input id="p-img" placeholder="https://...">
+    <label>Imágenes adicionales (una URL por línea) — opcional</label>
+    <textarea id="p-galeria" rows="3" placeholder="https://...&#10;https://...&#10;https://..." style="width:100%;padding:10px;border:1px solid var(--linea);border-radius:8px;font-size:14px;font-family:inherit;resize:vertical"></textarea>
     <div class="botones">
       <button class="btn sec" style="flex:1" onclick="cerrarModalProducto()">Cancelar</button>
       <button class="btn" style="flex:1" id="btn-guardar-prod" onclick="guardarProducto()">Crear producto</button>
@@ -821,7 +823,7 @@ function abrirModalProducto(){
   document.getElementById('prod-titulo').textContent = 'Nuevo producto';
   document.getElementById('btn-guardar-prod').textContent = 'Crear producto';
   llenarSelectsProducto();
-  ['p-nombre','p-desc','p-precio','p-img'].forEach(id=>document.getElementById(id).value='');
+  ['p-nombre','p-desc','p-precio','p-img','p-galeria'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('p-orden').value = PRODS.length;
   document.getElementById('p-cat').value = '';
   document.getElementById('p-marca').value = '';
@@ -841,6 +843,7 @@ function editarProducto(id){
   document.getElementById('p-cat').value = p.categoria_id || '';
   document.getElementById('p-marca').value = p.marca_id || '';
   document.getElementById('p-img').value = p.imagen_principal || '';
+  document.getElementById('p-galeria').value = p.galeria || '';
   document.getElementById('overlay-prod').classList.add('on');
 }
 function cerrarModalProducto(){ document.getElementById('overlay-prod').classList.remove('on'); }
@@ -859,7 +862,8 @@ async function guardarProducto(){
     orden: Number(document.getElementById('p-orden').value)||0,
     categoria_id: document.getElementById('p-cat').value || null,
     marca_id: document.getElementById('p-marca').value || null,
-    imagen_principal: document.getElementById('p-img').value.trim() || null
+    imagen_principal: document.getElementById('p-img').value.trim() || null,
+    galeria: document.getElementById('p-galeria').value.trim() || null
   };
 
   let error;

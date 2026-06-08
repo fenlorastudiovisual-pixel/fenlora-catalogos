@@ -148,6 +148,34 @@
 
   footer{text-align:center;padding:24px 16px 28px;color:var(--suave);font-size:11px;border-top:1px solid var(--linea);margin-top:10px}
   footer b{color:var(--texto);font-weight:600}
+
+  /* LIGHTBOX (detalle de producto + carrusel) */
+  .lb{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;padding:16px}
+  .lb.show{display:flex}
+  .lb-ov{position:absolute;inset:0;background:rgba(20,15,10,.6);backdrop-filter:blur(3px)}
+  .lb-card{position:relative;z-index:1;width:100%;max-width:430px;max-height:92vh;overflow-y:auto;background:var(--card);border-radius:22px;box-shadow:0 24px 70px rgba(0,0,0,.4);animation:lbIn .3s cubic-bezier(.22,1,.36,1)}
+  @keyframes lbIn{from{opacity:0;transform:scale(.92) translateY(14px)}to{opacity:1;transform:scale(1) translateY(0)}}
+  .lb-x{position:absolute;top:12px;right:12px;z-index:3;width:36px;height:36px;border:none;border-radius:50%;background:rgba(255,255,255,.92);font-size:20px;cursor:pointer;color:#1F1B17;box-shadow:0 2px 10px rgba(0,0,0,.18)}
+  .lb-fav{position:absolute;top:12px;left:12px;z-index:3;width:36px;height:36px;border:none;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.18)}
+  .lb-fav svg{width:19px;height:19px;fill:none;stroke:#9a9389;stroke-width:2}
+  .lb-fav.on svg{fill:#E0245E;stroke:#E0245E}
+  .lb-carru{position:relative;width:100%;aspect-ratio:1/1;overflow:hidden;background:linear-gradient(160deg,#F5EEE2,#E9DECB);border-radius:22px 22px 0 0}
+  .lb-track{display:flex;height:100%;transition:transform .35s cubic-bezier(.22,1,.36,1)}
+  .lb-slide{min-width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+  .lb-slide img{width:100%;height:100%;object-fit:cover}
+  .lb-slide .ph{width:56px;height:56px;opacity:.5;color:#C9B89A}
+  .lb-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:38px;height:38px;border:none;border-radius:50%;background:rgba(255,255,255,.9);font-size:22px;line-height:1;cursor:pointer;color:#1F1B17;box-shadow:0 2px 10px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center}
+  .lb-arrow.prev{left:10px} .lb-arrow.next{right:10px}
+  .lb-dots{position:absolute;bottom:12px;left:0;right:0;display:flex;gap:6px;justify-content:center;z-index:2}
+  .lb-dots span{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.6);transition:all .2s}
+  .lb-dots span.on{background:#fff;width:18px;border-radius:4px}
+  .lb-info{padding:18px 20px 20px}
+  .lb-nom{font-family:var(--serif);font-size:21px;font-weight:700;line-height:1.2}
+  .lb-des{font-size:13.5px;color:var(--suave);margin-top:8px;line-height:1.5}
+  .lb-precio{font-size:22px;font-weight:700;color:var(--primario);margin-top:12px}
+  .lb-add{width:100%;border:none;background:var(--primario);color:#fff;font-size:15px;font-weight:700;font-family:inherit;padding:14px;border-radius:13px;cursor:pointer;margin-top:16px;display:flex;align-items:center;justify-content:center;gap:8px;transition:filter .15s}
+  .lb-add:hover{filter:brightness(1.08)}
+  .lb-add svg{width:18px;height:18px;fill:currentColor}
 </style>
 </head>
 <body>
@@ -246,6 +274,26 @@
   <div class="drawer-body">
     <p style="font-size:13px;color:var(--suave);margin-bottom:14px;line-height:1.5">Toca un estilo para ver cómo se vería tu catálogo. Así de fácil lo personalizamos a tu marca.</p>
     <div class="tchips" id="tchips"></div>
+  </div>
+</div>
+
+<div class="lb" id="lightbox">
+  <div class="lb-ov" onclick="cerrarLightbox()"></div>
+  <div class="lb-card">
+    <button class="lb-x" onclick="cerrarLightbox()">&times;</button>
+    <button class="lb-fav" id="lb-fav" onclick="lbToggleFav()" aria-label="Favorito"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.5-9.5-9C1 9 2.5 5.5 6 5.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.5 0 5 3.5 3.5 6.5C19 16.5 12 21 12 21z"/></svg></button>
+    <div class="lb-carru">
+      <div class="lb-track" id="lb-track"></div>
+      <button class="lb-arrow prev" id="lb-prev" onclick="lbMover(-1)">&lsaquo;</button>
+      <button class="lb-arrow next" id="lb-next" onclick="lbMover(1)">&rsaquo;</button>
+      <div class="lb-dots" id="lb-dots"></div>
+    </div>
+    <div class="lb-info">
+      <div class="lb-nom" id="lb-nom"></div>
+      <div class="lb-des" id="lb-des"></div>
+      <div class="lb-precio" id="lb-precio"></div>
+      <button class="lb-add" id="lb-add" onclick="lbAgregar()"></button>
+    </div>
   </div>
 </div>
 
@@ -432,15 +480,15 @@ function pintarProductos(){
       :'<svg class="ph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>';
     const badge=verCat?'<span class="badge">'+esc(nombreCat(p.categoria_id))+'</span>':'';
     const favOn=FAVORITOS.indexOf(p.id)>=0?' on':'';
-    const fav='<button class="fav-btn'+favOn+'" id="fav-'+p.id+'" onclick="toggleFav(\''+p.id+'\')" aria-label="Favorito"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.5-9.5-9C1 9 2.5 5.5 6 5.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.5 0 5 3.5 3.5 6.5C19 16.5 12 21 12 21z"/></svg></button>';
+    const fav='<button class="fav-btn'+favOn+'" id="fav-'+p.id+'" onclick="event.stopPropagation();toggleFav(\''+p.id+'\')" aria-label="Favorito"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.5-9.5-9C1 9 2.5 5.5 6 5.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.5 0 5 3.5 3.5 6.5C19 16.5 12 21 12 21z"/></svg></button>';
     const precio=(muestraPrecio&&p.precio!=null)?'<div class="precio">$'+Number(p.precio).toLocaleString('es-CO')+'</div>':'';
     const delay=Math.min(i,12)*0.05;
-    html+='<div class="card" style="animation-delay:'+delay+'s">'
+    html+='<div class="card" style="animation-delay:'+delay+'s;cursor:pointer" onclick="abrirProducto(\''+p.id+'\')">'
       +'<div class="img">'+fav+badge+img+'</div>'
       +'<div class="body">'
       +'<div class="nom">'+esc(p.nombre)+'</div>'
       +'<div class="des">'+esc(p.descripcion||'')+'</div>'
-      +'<div class="foot">'+precio+'<button class="add" onclick="agregarCarrito(\''+p.id+'\')" aria-label="Agregar">+</button></div>'
+      +'<div class="foot">'+precio+'<button class="add" onclick="event.stopPropagation();agregarCarrito(\''+p.id+'\')" aria-label="Agregar">+</button></div>'
       +'</div></div>';
   });
   html+='</div>';
@@ -536,6 +584,60 @@ function pintarFavoritos(){
   });
   body.innerHTML=html;
 }
+
+/* ─── LIGHTBOX (detalle + carrusel) ─── */
+let LB_IMGS=[], LB_IDX=0, LB_ID=null, lbTX=0;
+function abrirProducto(id){
+  const p=prodPorId(id); if(!p)return;
+  LB_ID=id; LB_IDX=0; LB_IMGS=[];
+  if(p.imagen_principal)LB_IMGS.push(p.imagen_principal);
+  if(p.galeria)String(p.galeria).split(/[\n,]+/).map(function(s){return s.trim();}).filter(Boolean).forEach(function(u){if(LB_IMGS.indexOf(u)<0)LB_IMGS.push(u);});
+  pintarLightbox(p);
+  document.getElementById('lightbox').classList.add('show');
+}
+function cerrarLightbox(){document.getElementById('lightbox').classList.remove('show');}
+function pintarLightbox(p){
+  const track=document.getElementById('lb-track');
+  const dots=document.getElementById('lb-dots');
+  if(!LB_IMGS.length){
+    track.innerHTML='<div class="lb-slide"><svg class="ph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg></div>';
+  } else {
+    track.innerHTML=LB_IMGS.map(function(u){return '<div class="lb-slide"><img src="'+esc(u)+'" alt="'+esc(p.nombre)+'"></div>';}).join('');
+  }
+  track.style.transform='translateX(0)';
+  const varias=LB_IMGS.length>1;
+  document.getElementById('lb-prev').style.display=varias?'flex':'none';
+  document.getElementById('lb-next').style.display=varias?'flex':'none';
+  dots.innerHTML=varias?LB_IMGS.map(function(u,i){return '<span class="'+(i===0?'on':'')+'"></span>';}).join(''):'';
+  document.getElementById('lb-nom').textContent=p.nombre;
+  document.getElementById('lb-des').textContent=p.descripcion||'';
+  const lbp=document.getElementById('lb-precio');
+  if(EMPRESA.muestra_precio&&p.precio!=null){lbp.style.display='block';lbp.textContent='$'+Number(p.precio).toLocaleString('es-CO');}
+  else{lbp.style.display='none';}
+  const favBtn=document.getElementById('lb-fav');
+  favBtn.classList.toggle('on',FAVORITOS.indexOf(p.id)>=0);
+  const waIcon='<svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.7 4.8-1.3A10 10 0 1012 2z"/></svg>';
+  document.getElementById('lb-add').innerHTML='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"/></svg> Agregar al pedido';
+}
+function lbMover(delta){
+  if(!LB_IMGS.length)return;
+  LB_IDX=(LB_IDX+delta+LB_IMGS.length)%LB_IMGS.length;
+  document.getElementById('lb-track').style.transform='translateX(-'+(LB_IDX*100)+'%)';
+  document.querySelectorAll('#lb-dots span').forEach(function(d,i){d.classList.toggle('on',i===LB_IDX);});
+}
+function lbToggleFav(){if(LB_ID){toggleFav(LB_ID);document.getElementById('lb-fav').classList.toggle('on',FAVORITOS.indexOf(LB_ID)>=0);}}
+function lbAgregar(){if(LB_ID){agregarCarrito(LB_ID);cerrarLightbox();}}
+/* swipe en el carrusel */
+(function(){
+  let x0=null;
+  document.addEventListener('touchstart',function(e){if(e.target.closest('.lb-carru'))x0=e.touches[0].clientX;},{passive:true});
+  document.addEventListener('touchend',function(e){
+    if(x0===null)return;
+    const dx=e.changedTouches[0].clientX-x0;
+    if(Math.abs(dx)>40)lbMover(dx<0?1:-1);
+    x0=null;
+  },{passive:true});
+})();
 
 /* ─── NAVEGACIÓN ─── */
 function setNav(id){
