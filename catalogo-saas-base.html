@@ -146,6 +146,20 @@
   .btn-fin:hover{filter:brightness(1.08)}
   .add-from-fav{border:none;background:var(--primario);color:#fff;font-size:11.5px;font-weight:600;font-family:inherit;padding:7px 12px;border-radius:9px;cursor:pointer;margin-left:auto}
 
+  /* CARRUSEL DE PROMOS */
+  .promos{display:none;position:relative;overflow:hidden;max-width:1180px;margin:0 auto}
+  .promo-track{display:flex;transition:transform .45s cubic-bezier(.22,1,.36,1)}
+  .promo-slide{min-width:100%;position:relative;aspect-ratio:21/9;background:linear-gradient(135deg,var(--primario),var(--secundario));background-size:cover;background-position:center;display:flex;align-items:flex-end}
+  @media(min-width:700px){.promo-slide{aspect-ratio:32/9}}
+  .promo-ov{position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.55),rgba(0,0,0,.15))}
+  .promo-txt{position:relative;z-index:1;padding:18px 20px;color:#fff;max-width:75%}
+  .promo-badge{display:inline-block;background:#fff;color:var(--primario);font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;margin-bottom:8px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+  .promo-tit{font-family:var(--serif);font-size:22px;font-weight:700;line-height:1.15;text-shadow:0 2px 10px rgba(0,0,0,.3)}
+  .promo-des{font-size:13px;margin-top:5px;opacity:.95;text-shadow:0 1px 6px rgba(0,0,0,.3);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .promo-dots{position:absolute;bottom:12px;right:16px;z-index:2;display:flex;gap:6px}
+  .promo-dots span{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.55);transition:all .2s;cursor:pointer}
+  .promo-dots span.on{background:#fff;width:18px;border-radius:4px}
+
   footer{text-align:center;padding:24px 16px 28px;color:var(--suave);font-size:11px;border-top:1px solid var(--linea);margin-top:10px}
   footer b{color:var(--texto);font-weight:600}
 
@@ -204,6 +218,11 @@
     <button onclick="activarPrueba()">Probar</button>
   </div>
   <div class="ok" id="demo-ok">✓ Listo. Ahora toca el botón de WhatsApp y el mensaje te llegará a ti.</div>
+</div>
+
+<div class="promos" id="promos">
+  <div class="promo-track" id="promo-track"></div>
+  <div class="promo-dots" id="promo-dots"></div>
 </div>
 
 <div class="barra">
@@ -311,7 +330,7 @@ function detectarSubdominio(){
 }
 
 let EMPRESA=null, PRODUCTOS=[], CATEGORIAS=[], categoriaActiva='todas', WA_PRUEBA='';
-let CARRITO=[], FAVORITOS=[];
+let CARRITO=[], FAVORITOS=[], PROMOS=[];
 
 /* ─── TEMAS (paletas preestablecidas) ─── */
 const TEMAS={
@@ -386,12 +405,14 @@ async function cargar(){
   }
   EMPRESA=emp;
   aplicarIdentidad(emp);
-  const [{data:cats},{data:prods}]=await Promise.all([
+  const [{data:cats},{data:prods},{data:promos}]=await Promise.all([
     sb.from('categorias').select('*').eq('empresa_id',emp.id).eq('activo',true).order('orden'),
-    sb.from('productos').select('*').eq('empresa_id',emp.id).eq('activo',true).order('orden')
+    sb.from('productos').select('*').eq('empresa_id',emp.id).eq('activo',true).order('orden'),
+    sb.from('promociones').select('*').eq('empresa_id',emp.id).eq('activo',true).order('orden')
   ]);
-  CATEGORIAS=cats||[]; PRODUCTOS=prods||[];
+  CATEGORIAS=cats||[]; PRODUCTOS=prods||[]; PROMOS=promos||[];
   pintarCategorias();
+  pintarPromos();
   pintarProductos();
   document.getElementById('pie').style.display='block';
   cerrarSplash();
@@ -584,6 +605,49 @@ function pintarFavoritos(){
   });
   body.innerHTML=html;
 }
+
+/* ─── PROMOS (carrusel) ─── */
+let PROMO_IDX=0, promoTimer=null;
+function pintarPromos(){
+  const cont=document.getElementById('promos');
+  const track=document.getElementById('promo-track');
+  const dots=document.getElementById('promo-dots');
+  if(!PROMOS.length){cont.style.display='none';return;}
+  const muestraPrecio=EMPRESA.muestra_precio;
+  track.innerHTML=PROMOS.map(function(pr){
+    const bg=pr.imagen?'style="background-image:url(\''+esc(pr.imagen)+'\')"':'';
+    let badge='';
+    if(pr.descuento)badge='<div class="promo-badge">-'+pr.descuento+'%</div>';
+    else if(muestraPrecio&&pr.precio_oferta!=null)badge='<div class="promo-badge">$'+Number(pr.precio_oferta).toLocaleString('es-CO')+'</div>';
+    return '<div class="promo-slide" '+bg+'><div class="promo-ov"></div><div class="promo-txt">'+badge
+      +'<div class="promo-tit">'+esc(pr.titulo)+'</div>'
+      +(pr.descripcion?'<div class="promo-des">'+esc(pr.descripcion)+'</div>':'')
+      +'</div></div>';
+  }).join('');
+  PROMO_IDX=0;
+  track.style.transform='translateX(0)';
+  const varias=PROMOS.length>1;
+  dots.innerHTML=varias?PROMOS.map(function(p,i){return '<span class="'+(i===0?'on':'')+'" onclick="promoIr('+i+')"></span>';}).join(''):'';
+  cont.style.display='block';
+  if(promoTimer)clearInterval(promoTimer);
+  if(varias)promoTimer=setInterval(function(){promoMover(1);},4500);
+}
+function promoMover(d){if(!PROMOS.length)return;PROMO_IDX=(PROMO_IDX+d+PROMOS.length)%PROMOS.length;aplicarPromo();}
+function promoIr(i){PROMO_IDX=i;aplicarPromo();}
+function aplicarPromo(){
+  document.getElementById('promo-track').style.transform='translateX(-'+(PROMO_IDX*100)+'%)';
+  document.querySelectorAll('#promo-dots span').forEach(function(s,i){s.classList.toggle('on',i===PROMO_IDX);});
+}
+(function(){
+  let x0=null;
+  document.addEventListener('touchstart',function(e){if(e.target.closest('.promos'))x0=e.touches[0].clientX;},{passive:true});
+  document.addEventListener('touchend',function(e){
+    if(x0===null)return;
+    const dx=e.changedTouches[0].clientX-x0;
+    if(Math.abs(dx)>40)promoMover(dx<0?1:-1);
+    x0=null;
+  },{passive:true});
+})();
 
 /* ─── LIGHTBOX (detalle + carrusel) ─── */
 let LB_IMGS=[], LB_IDX=0, LB_ID=null, lbTX=0;

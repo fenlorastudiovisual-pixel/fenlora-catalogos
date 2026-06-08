@@ -214,6 +214,15 @@
       </div>
       <div id="lista-productos"><div class="estado">—</div></div>
     </div>
+
+    <!-- Promociones -->
+    <div class="panel" style="margin-top:14px">
+      <div class="ph">
+        <div class="t">Promociones</div>
+        <button class="btn" style="margin-left:auto" onclick="abrirModalPromo()">+ Promo</button>
+      </div>
+      <div id="lista-promos"><div class="estado">—</div></div>
+    </div>
   </div>
 
 </div>
@@ -391,6 +400,34 @@
     <div class="botones">
       <button class="btn sec" style="flex:1" onclick="cerrarModalProducto()">Cancelar</button>
       <button class="btn" style="flex:1" id="btn-guardar-prod" onclick="guardarProducto()">Crear producto</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-promo">
+  <div class="modal">
+    <h3 id="promo-titulo">Nueva promoción</h3>
+    <label>Título</label>
+    <input id="pr-titulo" placeholder="Ej: 2x1 en camisas">
+    <label>Descripción</label>
+    <input id="pr-desc" placeholder="Breve detalle de la oferta">
+    <label>Imagen de fondo (URL)</label>
+    <input id="pr-img" placeholder="https://...">
+    <div class="fila">
+      <div>
+        <label>Descuento (%) — opcional</label>
+        <input id="pr-descuento" type="number" placeholder="30">
+      </div>
+      <div>
+        <label>Precio oferta (COP) — opcional</label>
+        <input id="pr-precio" type="number" placeholder="0">
+      </div>
+    </div>
+    <label>Orden</label>
+    <input id="pr-orden" type="number" placeholder="0" value="0">
+    <div class="botones">
+      <button class="btn sec" style="flex:1" onclick="cerrarModalPromo()">Cancelar</button>
+      <button class="btn" style="flex:1" id="btn-guardar-promo" onclick="guardarPromo()">Crear promoción</button>
     </div>
   </div>
 </div>
@@ -691,7 +728,9 @@ let CLIENTE_ACTUAL = null;
 let CATS = [];
 let MARCAS = [];
 let PRODS = [];
+let PROMOS = [];
 let EDITANDO_PROD = null;
+let EDITANDO_PROMO = null;
 
 async function abrirCatalogo(id){
   const e = EMPRESAS.find(x=>x.id===id);
@@ -716,17 +755,20 @@ function volverAClientes(){
 
 async function cargarCatalogo(){
   const eid = CLIENTE_ACTUAL.id;
-  const [rc, rm, rp] = await Promise.all([
+  const [rc, rm, rp, rpr] = await Promise.all([
     sb.from('categorias').select('*').eq('empresa_id', eid).order('orden'),
     sb.from('marcas').select('*').eq('empresa_id', eid).order('orden'),
-    sb.from('productos').select('*').eq('empresa_id', eid).order('orden')
+    sb.from('productos').select('*').eq('empresa_id', eid).order('orden'),
+    sb.from('promociones').select('*').eq('empresa_id', eid).order('orden')
   ]);
   CATS = rc.data || [];
   MARCAS = rm.data || [];
   PRODS = rp.data || [];
+  PROMOS = rpr.data || [];
   pintarCats();
   pintarMarcas();
   pintarProductos();
+  pintarPromos();
 }
 
 // ── CATEGORÍAS ──
@@ -882,6 +924,80 @@ async function borrarProducto(id){
   const p = PRODS.find(x=>x.id===id);
   if (!confirm('¿Borrar el producto "'+(p?p.nombre:'')+'"?')) return;
   const { error } = await sb.from('productos').delete().eq('id', id);
+  if (error){ alert('Error: '+error.message); return; }
+  cargarCatalogo();
+}
+
+// ── PROMOCIONES ──
+function pintarPromos(){
+  const c = document.getElementById('lista-promos');
+  if (!PROMOS.length){ c.innerHTML = '<div class="estado">Sin promociones. Crea una con “+ Promo”.</div>'; return; }
+  c.innerHTML = PROMOS.map(function(pr){
+    const img = pr.imagen ? '<img class="miniimg" src="'+pr.imagen+'">' : '<div class="miniimg ph">★</div>';
+    const extra = pr.descuento ? ' · -'+pr.descuento+'%' : (pr.precio_oferta!=null ? ' · $'+Number(pr.precio_oferta).toLocaleString('es-CO') : '');
+    return '<div class="item">'+img
+      + '<div><div class="nom">'+pr.titulo+'</div>'
+      + '<div class="cli-sub">'+(pr.descripcion||'sin descripción')+extra+'</div></div>'
+      + '<div class="acts">'
+      + '<span title="Editar" onclick="editarPromo(\''+pr.id+'\')">✏️</span>'
+      + '<span title="Borrar" onclick="borrarPromo(\''+pr.id+'\')">🗑️</span>'
+      + '</div></div>';
+  }).join('');
+}
+function abrirModalPromo(){
+  EDITANDO_PROMO = null;
+  document.getElementById('promo-titulo').textContent = 'Nueva promoción';
+  document.getElementById('btn-guardar-promo').textContent = 'Crear promoción';
+  ['pr-titulo','pr-desc','pr-img','pr-descuento','pr-precio'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('pr-orden').value = PROMOS.length;
+  document.getElementById('overlay-promo').classList.add('on');
+}
+function editarPromo(id){
+  const pr = PROMOS.find(function(x){return x.id===id;});
+  if (!pr) return;
+  EDITANDO_PROMO = id;
+  document.getElementById('promo-titulo').textContent = 'Editar promoción';
+  document.getElementById('btn-guardar-promo').textContent = 'Guardar cambios';
+  document.getElementById('pr-titulo').value = pr.titulo || '';
+  document.getElementById('pr-desc').value = pr.descripcion || '';
+  document.getElementById('pr-img').value = pr.imagen || '';
+  document.getElementById('pr-descuento').value = (pr.descuento!=null?pr.descuento:'');
+  document.getElementById('pr-precio').value = (pr.precio_oferta!=null?pr.precio_oferta:'');
+  document.getElementById('pr-orden').value = pr.orden || 0;
+  document.getElementById('overlay-promo').classList.add('on');
+}
+function cerrarModalPromo(){ document.getElementById('overlay-promo').classList.remove('on'); }
+async function guardarPromo(){
+  const titulo = document.getElementById('pr-titulo').value.trim();
+  if (!titulo){ alert('El título es obligatorio.'); return; }
+  const btn = document.getElementById('btn-guardar-promo');
+  const txt = btn.textContent; btn.textContent='Guardando…'; btn.disabled=true;
+  const desc = document.getElementById('pr-descuento').value;
+  const prec = document.getElementById('pr-precio').value;
+  const datos = {
+    titulo: titulo,
+    descripcion: document.getElementById('pr-desc').value.trim(),
+    imagen: document.getElementById('pr-img').value.trim() || null,
+    descuento: desc==='' ? null : Number(desc),
+    precio_oferta: prec==='' ? null : Number(prec),
+    orden: Number(document.getElementById('pr-orden').value)||0
+  };
+  let error;
+  if (EDITANDO_PROMO){
+    ({ error } = await sb.from('promociones').update(datos).eq('id', EDITANDO_PROMO));
+  } else {
+    datos.empresa_id = CLIENTE_ACTUAL.id;
+    ({ error } = await sb.from('promociones').insert(datos));
+  }
+  btn.textContent = txt; btn.disabled = false;
+  if (error){ alert('Error: '+error.message); return; }
+  cerrarModalPromo();
+  cargarCatalogo();
+}
+async function borrarPromo(id){
+  const pr = PROMOS.find(function(x){return x.id===id;});
+  if (!confirm('¿Borrar la promoción "'+(pr?pr.titulo:'')+'"?')) return;
+  const { error } = await sb.from('promociones').delete().eq('id', id);
   if (error){ alert('Error: '+error.message); return; }
   cargarCatalogo();
 }
