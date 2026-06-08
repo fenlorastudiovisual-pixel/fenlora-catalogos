@@ -1148,14 +1148,10 @@ async function borrarColeccion(id){
 // ── IMPORTAR DESDE EXCEL ──
 let IMPORT_FILAS = [];
 function descargarPlantilla(){
-  const ejemplo = [
-    { nombre:'Taladro percutor 750W', sku:'TAL-750', precio:189000, descripcion:'Taladro con maletín y brocas', categoria:'Herramientas eléctricas', marca:'Bosch', imagen:'https://...' },
-    { nombre:'Caja de tornillos x100', sku:'TOR-100', precio:12000, descripcion:'Tornillos para madera', categoria:'Tornillería', marca:'', imagen:'' }
-  ];
-  const ws = XLSX.utils.json_to_sheet(ejemplo, { header:['nombre','sku','precio','descripcion','categoria','marca','imagen'] });
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Productos');
-  XLSX.writeFile(wb, 'plantilla_productos.xlsx');
+  const a = document.createElement('a');
+  a.href = 'plantilla_productos.xlsx';
+  a.download = 'plantilla_productos.xlsx';
+  document.body.appendChild(a); a.click(); a.remove();
 }
 function normClaves(fila){
   const o = {};
