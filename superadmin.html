@@ -382,6 +382,8 @@
     <input id="f-logourl" placeholder="https://...">
     <label>URL del banner de portada (opcional)</label>
     <input id="f-bannerurl" placeholder="https://...  (recomendado: imagen apaisada ~1200x450)">
+    <label>Frase del intro (opcional)</label>
+    <input id="f-fraseintro" placeholder="Ej: TIENDA DE ROPA (si lo dejas vacío, usa el tipo de negocio)">
     <label>Modo de promociones</label>
     <select id="f-promomodo">
       <option value="carrusel">Carrusel debajo del encabezado</option>
@@ -725,6 +727,7 @@ function abrirModalNuevo(){
   document.getElementById('f-logo').value = 'true';
   document.getElementById('f-logourl').value = '';
   document.getElementById('f-bannerurl').value = '';
+  document.getElementById('f-fraseintro').value = '';
   document.getElementById('f-promomodo').value = 'carrusel';
   document.getElementById('f-modopedido').value = 'whatsapp';
   document.getElementById('overlay').classList.add('on');
@@ -753,6 +756,7 @@ function editarCliente(id){
   document.getElementById('f-logo').value = (e.mostrar_logo !== false) ? 'true' : 'false';
   document.getElementById('f-logourl').value = e.logo_url || '';
   document.getElementById('f-bannerurl').value = e.banner_url || '';
+  document.getElementById('f-fraseintro').value = e.frase_intro || '';
   document.getElementById('f-promomodo').value = e.promo_modo || 'carrusel';
   document.getElementById('f-modopedido').value = e.modo_pedido || 'whatsapp';
   document.getElementById('overlay').classList.add('on');
@@ -793,6 +797,7 @@ async function guardarCliente(){
     mostrar_logo: document.getElementById('f-logo').value === 'true',
     logo_url: document.getElementById('f-logourl').value.trim() || null,
     banner_url: document.getElementById('f-bannerurl').value.trim() || null,
+    frase_intro: document.getElementById('f-fraseintro').value.trim() || null,
     promo_modo: document.getElementById('f-promomodo').value,
     modo_pedido: document.getElementById('f-modopedido').value,
     plan_valor: plan
