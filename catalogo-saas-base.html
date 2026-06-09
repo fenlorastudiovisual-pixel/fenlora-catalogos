@@ -567,7 +567,7 @@ function aplicarIdentidad(emp){
   if(emp.banner_url){
     // Banner de portada con el logo centrado encima
     hero.classList.add('con-banner');
-    hero.style.backgroundImage='url('+emp.banner_url+')';
+    hero.style.backgroundImage="url('"+emp.banner_url+"')";
     document.getElementById('nom-empresa').style.display='none';
     const deco=cab.querySelector('.deco'); if(deco)deco.style.display='none';
     pill.style.display='none';
