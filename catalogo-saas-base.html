@@ -39,6 +39,11 @@
 
   /* HERO */
   .hero{position:relative;overflow:hidden;text-align:center;color:#fff;background:linear-gradient(135deg,var(--primario),var(--secundario));padding:22px 20px 18px}
+  .hero.con-banner{padding:0;background-size:cover;background-position:center;min-height:170px;display:flex;align-items:center;justify-content:center}
+  @media(min-width:700px){.hero.con-banner{min-height:230px}}
+  .hero.con-banner::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.18),rgba(0,0,0,.32))}
+  .hero.con-banner .hero-inner{position:relative;z-index:1;padding:24px 20px}
+  .hero.con-banner .hero-logo{margin:0 auto;filter:drop-shadow(0 4px 16px rgba(0,0,0,.45))}
   .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 78% -20%,rgba(255,255,255,.22),transparent 55%);pointer-events:none}
   .hero-inner{position:relative;z-index:1;animation:heroIn .9s cubic-bezier(.22,1,.36,1) both}
   @keyframes heroIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
@@ -557,9 +562,24 @@ function aplicarIdentidad(emp){
   const pill=document.getElementById('hero-pill');
   pill.textContent=tag;
   const mostrarLogo=emp.logo_url&&emp.mostrar_logo!==false;
-  if(mostrarLogo){
+  const cab=document.querySelector('.hero-inner');
+  const hero=document.getElementById('cab');
+  if(emp.banner_url){
+    // Banner de portada con el logo centrado encima
+    hero.classList.add('con-banner');
+    hero.style.backgroundImage='url('+emp.banner_url+')';
+    document.getElementById('nom-empresa').style.display='none';
+    const deco=cab.querySelector('.deco'); if(deco)deco.style.display='none';
+    pill.style.display='none';
+    if(mostrarLogo){
+      const img=document.createElement('img');
+      img.className='hero-logo'; img.src=emp.logo_url; img.alt=emp.nombre;
+      cab.insertBefore(img,cab.firstChild);
+    }
+    if(mostrarLogo) document.getElementById('sp-visual').innerHTML='<img class="sp-logo" src="'+esc(emp.logo_url)+'" alt="'+esc(emp.nombre)+'">';
+    else document.getElementById('sp-mark').textContent=iniciales(emp.nombre);
+  } else if(mostrarLogo){
     document.getElementById('sp-visual').innerHTML='<img class="sp-logo" src="'+esc(emp.logo_url)+'" alt="'+esc(emp.nombre)+'">';
-    const cab=document.querySelector('.hero-inner');
     const img=document.createElement('img');
     img.className='hero-logo'; img.src=emp.logo_url; img.alt=emp.nombre;
     cab.insertBefore(img,cab.firstChild);
