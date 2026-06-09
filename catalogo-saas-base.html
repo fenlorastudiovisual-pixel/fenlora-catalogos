@@ -39,8 +39,7 @@
 
   /* HERO */
   .hero{position:relative;overflow:hidden;text-align:center;color:#fff;background:linear-gradient(135deg,var(--primario),var(--secundario));padding:22px 20px 18px}
-  .hero.con-banner{padding:0;background-size:cover;background-position:center;min-height:170px;display:flex;align-items:center;justify-content:center}
-  @media(min-width:700px){.hero.con-banner{min-height:230px}}
+  .hero.con-banner{padding:0;background-size:cover;background-position:center;background-repeat:no-repeat;aspect-ratio:16/9;min-height:0;display:flex;align-items:center;justify-content:center}
   .hero.con-banner::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.18),rgba(0,0,0,.32))}
   .hero.con-banner .hero-inner{position:relative;z-index:1;padding:24px 20px}
   .hero.con-banner .hero-logo{margin:0 auto;filter:drop-shadow(0 4px 16px rgba(0,0,0,.45))}
