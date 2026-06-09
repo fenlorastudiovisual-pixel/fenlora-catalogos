@@ -564,17 +564,12 @@ function aplicarIdentidad(emp){
   const cab=document.querySelector('.hero-inner');
   const hero=document.getElementById('cab');
   if(emp.banner_url){
-    // Banner de portada con el logo centrado encima
+    // Banner de portada limpio (sin logo encima). El logo va solo en el splash.
     hero.classList.add('con-banner');
     hero.style.backgroundImage="url('"+emp.banner_url+"')";
     document.getElementById('nom-empresa').style.display='none';
     const deco=cab.querySelector('.deco'); if(deco)deco.style.display='none';
     pill.style.display='none';
-    if(mostrarLogo){
-      const img=document.createElement('img');
-      img.className='hero-logo'; img.src=emp.logo_url; img.alt=emp.nombre;
-      cab.insertBefore(img,cab.firstChild);
-    }
     if(mostrarLogo) document.getElementById('sp-visual').innerHTML='<img class="sp-logo" src="'+esc(emp.logo_url)+'" alt="'+esc(emp.nombre)+'">';
     else document.getElementById('sp-mark').textContent=iniciales(emp.nombre);
   } else if(mostrarLogo){
@@ -878,7 +873,7 @@ function pintarPromos(){
     cont.style.display='block';
   }
   if(promoTimer)clearInterval(promoTimer);
-  if(PROMOS.length>1)promoTimer=setInterval(function(){promoMover(1);},4500);
+  if(PROMOS.length>1)promoTimer=setInterval(function(){promoMover(1);},6000);
 }
 function cerrarPromoPop(){
   document.getElementById('promo-pop').classList.remove('show');
