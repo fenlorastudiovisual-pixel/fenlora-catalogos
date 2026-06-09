@@ -29,8 +29,8 @@
   #splash.gone{opacity:0;visibility:hidden;pointer-events:none}
   .sp-wrap{display:flex;flex-direction:column;align-items:center;animation:spIn 1s cubic-bezier(.22,1,.36,1) both}
   @keyframes spIn{from{opacity:0;transform:scale(.85) translateY(18px)}to{opacity:1;transform:scale(1) translateY(0)}}
-  .sp-logo{max-width:85vw;width:auto;height:auto;max-height:260px;display:block;object-fit:contain}
-  .sp-mark{width:102px;height:102px;border-radius:28px;display:flex;align-items:center;justify-content:center;background:linear-gradient(140deg,var(--primario),var(--secundario));color:#fff;font-family:var(--serif);font-size:42px;font-weight:700;box-shadow:0 12px 34px rgba(35,25,15,.20)}
+  .sp-logo{max-width:85vw;width:auto;height:auto;max-height:260px;display:block;object-fit:contain;animation:spIn .8s ease both}
+  .sp-mark{width:102px;height:102px;border-radius:28px;display:flex;align-items:center;justify-content:center;background:linear-gradient(140deg,var(--primario),var(--secundario));color:#fff;font-family:var(--serif);font-size:42px;font-weight:700;box-shadow:0 12px 34px rgba(35,25,15,.20);animation:spIn .8s ease both}
   .sp-nombre{margin-top:20px;font-family:var(--serif);font-size:26px;font-weight:700;text-align:center;animation:spIn .8s ease .25s both;padding:0 24px}
   .sp-tagline{font-size:10.5px;letter-spacing:.32em;text-transform:uppercase;color:var(--suave);margin-top:7px;animation:spIn .8s ease .4s both}
   .sp-bar-wrap{width:110px;height:3px;background:var(--linea);border-radius:3px;overflow:hidden;margin-top:28px;animation:spIn .6s ease .35s both}
@@ -261,8 +261,8 @@
 
 <div id="splash">
   <div class="sp-wrap">
-    <div id="sp-visual"><div class="sp-mark" id="sp-mark">&middot;</div></div>
-    <div class="sp-nombre" id="sp-nombre">Cargando&hellip;</div>
+    <div id="sp-visual"></div>
+    <div class="sp-nombre" id="sp-nombre"></div>
     <div class="sp-tagline" id="sp-tagline"></div>
     <div class="sp-bar-wrap"><div class="sp-bar"></div></div>
   </div>
@@ -571,7 +571,7 @@ function aplicarIdentidad(emp){
     const deco=cab.querySelector('.deco'); if(deco)deco.style.display='none';
     pill.style.display='none';
     if(mostrarLogo) document.getElementById('sp-visual').innerHTML='<img class="sp-logo" src="'+esc(emp.logo_url)+'" alt="'+esc(emp.nombre)+'">';
-    else document.getElementById('sp-mark').textContent=iniciales(emp.nombre);
+    else document.getElementById('sp-visual').innerHTML='<div class="sp-mark">'+iniciales(emp.nombre)+'</div>';
   } else if(mostrarLogo){
     document.getElementById('sp-visual').innerHTML='<img class="sp-logo" src="'+esc(emp.logo_url)+'" alt="'+esc(emp.nombre)+'">';
     const img=document.createElement('img');
@@ -582,7 +582,7 @@ function aplicarIdentidad(emp){
     const deco=cab.querySelector('.deco'); if(deco)deco.style.display='none';
     pill.style.display='none';
   } else {
-    document.getElementById('sp-mark').textContent=iniciales(emp.nombre);
+    document.getElementById('sp-visual').innerHTML='<div class="sp-mark">'+iniciales(emp.nombre)+'</div>';
     pill.style.display='inline-block';
   }
   if(emp.mostrar_busqueda!==false)document.getElementById('barra-busqueda').style.display='block';
